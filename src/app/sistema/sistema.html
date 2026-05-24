@@ -1,0 +1,123 @@
+<div class="contenedor_general">
+    <div
+        class="sidebar d-none d-lg-flex flex-column flex-shrink-0 p-3 bg-dark text-white">
+        <div class="cabeza">
+            <img src="/logo/Logo.png" alt="logo" class="logo">
+            <span class="fs-4">Multiservicio Rafael</span>
+        </div>
+        <hr>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li>
+                <a routerLink="/sistema/dashboard" class="nav-link text-white">
+                    Dashboard
+                </a>
+            </li>
+            <li>
+                <a
+                    class="nav-link text-white d-flex justify-content-between align-items-center"
+                    data-bs-toggle="collapse"
+                    href="#menuClientes">
+                    <span>Servicio</span>
+                    <small>▼</small>
+                </a>
+                <div class="collapse" id="menuClientes">
+                    <ul class="list-unstyled ps-3">
+                        <li>
+                            <a class="nav-link text-secondary">
+                                Venta
+                            </a>
+                        </li>
+                        <li>
+                            <a class="nav-link text-secondary">
+                                Mantenimiento
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            <li>
+                <a class="nav-link text-white">Producto</a>
+            </li>
+            <li>
+                <a routerLink="/sistema/proveedor" class="nav-link text-white">
+                    Proveedores
+                </a>
+            </li>
+            <li>
+                <a routerLink="/sistema/cliente" class="nav-link text-white">
+                    Clientes
+                </a>
+            </li>
+            <li>
+                <a routerLink="/sistema/trabajador" class="nav-link text-white">
+                    Trabajadores
+                </a>
+            </li>
+        </ul>
+        <hr>
+        <button class="cerrar">
+            Cerrar Sesión
+            <i class="bi bi-door-open-fill"></i>
+        </button>
+    </div>
+    <div class="contenedor_informacion">
+        <nav class="navbar bg-body-tertiary py-3 px-3">
+            <button
+                class="btn d-lg-none"
+                data-bs-toggle="offcanvas"
+                data-bs-target="#menuMovil">
+                <i class="bi bi-list fs-2"></i>
+            </button>
+            <div class="ms-auto d-flex align-items-center">
+                <h6 class="mb-0 me-2">
+                    Administrador |
+                </h6>
+                <i class="bi bi-person-circle"
+                    style="font-size:40px;color:#ff3b30;">
+                </i>
+            </div>
+        </nav>
+        <div class="card contenedor-card">
+            <router-outlet></router-outlet>
+        </div>
+    </div>
+</div>
+<!--Este es el menu para moviles -->
+<div class="offcanvas offcanvas-start bg-dark text-white"
+    tabindex="-1"
+    id="menuMovil">
+    <div class="offcanvas-header">
+        <h5>Multiservicio Rafael</h5>
+        <button type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="offcanvas">
+        </button>
+    </div>
+    <div class="offcanvas-body">
+        <ul class="nav flex-column">
+            <li>
+                <a routerLink="/sistema/dashboard"
+                    data-bs-dismiss="offcanvas"
+                    class="nav-link text-white">
+                    Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a routerLink="/sistema/cliente"
+                    data-bs-dismiss="offcanvas"
+                    class="nav-link text-white">
+                    Clientes
+                </a>
+            </li>
+
+            <li>
+                <a routerLink="/sistema/trabajador"
+                    data-bs-dismiss="offcanvas"
+                    class="nav-link text-white">
+                    Trabajadores
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>

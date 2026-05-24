@@ -1,0 +1,43 @@
+.contenedor_general{
+    display:flex;
+    min-height:100vh;
+}
+
+.sidebar{
+    width:280px;
+    min-height:100vh;
+}
+
+.contenedor_informacion{
+    width:100%;
+}
+
+.logo{
+    width:70px;
+}
+
+.cabeza{
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+}
+
+.contenedor-card{
+    margin:10px;
+    min-height:calc(100vh - 80px);
+}
+
+.cerrar{
+    border:none;
+    background:none;
+    color:red;
+}
+
+@media(max-width:991px){
+
+    .contenedor_general{
+        display:block;
+    }
+
+}
