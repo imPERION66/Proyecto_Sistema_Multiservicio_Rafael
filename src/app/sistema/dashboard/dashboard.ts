@@ -52,5 +52,5 @@ export class Dashboard {
         this.#timeoutID = undefined;
       }, 3000);
     }
-  }
+  };
 }

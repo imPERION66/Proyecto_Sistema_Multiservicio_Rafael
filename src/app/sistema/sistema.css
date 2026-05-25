@@ -1,43 +1,107 @@
-.contenedor_general{
-    display:flex;
-    min-height:100vh;
+.contenedor_general {
+    display: flex;
+    height: 100vh; 
+    overflow: hidden; 
 }
 
-.sidebar{
-    width:280px;
-    min-height:100vh;
+.sidebar {
+    width: 270px;
+    height: 100vh; 
+    display: flex;
+    flex-direction: column;
 }
 
-.contenedor_informacion{
-    width:100%;
+.contenedor_informacion {
+    flex-grow: 1;
+    height: 100vh;
+    overflow-y: auto; 
 }
 
-.logo{
-    width:70px;
+.logo {
+    width: 70px;
 }
 
-.cabeza{
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
+.cabeza {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
-.contenedor-card{
-    margin:10px;
-    min-height:calc(100vh - 80px);
+.contenedor-card {
+    margin: 10px;
+    padding: 20px; 
 }
 
-.cerrar{
-    border:none;
-    background:none;
-    color:red;
+.cerrar {
+    border: none;
+    background: none;
+    color: #ff3b30; 
+    text-align: left;
+    padding: 8px 4px;
+    cursor: pointer;
 }
 
-@media(max-width:991px){
-
-    .contenedor_general{
-        display:block;
+/* Adaptación para pantallas medianas y pequeñas */
+@media(max-width: 991px) {
+    .contenedor_general {
+        display: block;
+        height: auto;
+        overflow: visible;
     }
 
+    .contenedor_informacion {
+        height: auto;
+        overflow-y: visible;
+    }
+}
+
+/* ==========================================================================
+   ESTILOS DE SELECCIÓN FIJA (AL HACER CLIC)
+   ========================================================================== */
+
+/* 1. Comportamiento base y hover para todos los botones del menú */
+.sidebar .nav-link, 
+.offcanvas .nav-link {
+    transition: background-color 0.2s ease;
+    border-radius: 6px;
+    margin-bottom: 2px;
+}
+
+.sidebar .nav-link:hover,
+.offcanvas .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+/* 2. EL FIJADOR: Cuando haces clic y el elemento mantiene el foco del sistema */
+.sidebar .nav-link:focus,
+.offcanvas .nav-link:focus,
+.sidebar .nav-link.router-link-active,
+.offcanvas .nav-link.router-link-active {
+    background-color: rgba(255, 255, 255, 0.15) !important; /* El fondo blanquito transparente */
+    color: #ffffff !important; /* Texto blanco brillante */
+    font-weight: 600;
+}
+
+/* 3. Animación de la flechita de Servicio */
+.sidebar a[data-bs-toggle="collapse"] small {
+    transition: transform 0.2s ease;
+    display: inline-block;
+}
+.sidebar a[aria-expanded="true"][data-bs-toggle="collapse"] small {
+    transform: rotate(180deg);
+}
+
+/* 4. Estilo especial para los submenús (Venta y Mantenimiento) */
+#menuClientes .nav-link {
+    color: rgba(255, 255, 255, 0.6) !important;
+    padding-left: 1.5rem;
+}
+
+/* Submenú seleccionado fijo al hacerle clic */
+#menuClientes .nav-link:focus,
+#menuClientes .nav-link.router-link-active {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
 }

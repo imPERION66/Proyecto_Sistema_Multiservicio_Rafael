@@ -1,0 +1,171 @@
+
+<div>
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark shadow-sm">
+        <div class="container-fluid px-3 py-2">
+            <div
+                class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center flex-grow-1 gap-3">
+
+                <div class="input-group flex-grow-1"
+                    style="max-width: 100%; width: auto; max-width: 450px;">
+                    <span
+                        class="input-group-text bg-secondary text-white border-0">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input
+                        #txtBuscar
+                        class="form-control border-0"
+                        type="text"
+                        placeholder="Buscar cliente..." />
+                </div>
+
+                <div
+                    class="d-flex align-items-center justify-content-between justify-content-sm-end gap-2 w-100 w-sm-auto">
+
+                    <div class="btn-group flex-grow-1 flex-sm-grow-0">
+                        <button type="button"
+                            class="btn btn-outline-light dropdown-toggle w-100 d-inline-flex align-items-center justify-content-center"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-funnel-fill me-2 text-danger"></i>
+                            Filtrar
+                        </button>
+                        <ul
+                            class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
+                            <li><a
+                                    class="dropdown-item d-flex align-items-center"
+                                    href="javascript:void(0)"><i
+                                        class="bi bi-star-fill text-warning me-2"></i>Más
+                                    frecuentes</a></li>
+                            <li><a
+                                    class="dropdown-item d-flex align-items-center"
+                                    href="javascript:void(0)"><i
+                                        class="bi bi-clock-history text-info me-2"></i>Recientes
+                                    (Nuevos)</a></li>
+                            <li><hr
+                                    class="dropdown-divider border-secondary"></li>
+                            <li><a
+                                    class="dropdown-item d-flex align-items-center"
+                                    href="javascript:void(0)"><i
+                                        class="bi bi-exclamation-triangle-fill text-danger me-2"></i>No
+                                    frecuentes / Inactivos</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="btn-group flex-grow-1 flex-sm-grow-0">
+                        <button type="button"
+                            class="btn btn-outline-light dropdown-toggle w-100 d-inline-flex align-items-center justify-content-center"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-download me-2 text-danger"></i>
+                            Exportar
+                        </button>
+                        <ul
+                            class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow">
+                            <li><a
+                                    class="dropdown-item d-flex align-items-center"
+                                    href="javascript:void(0)"><i
+                                        class="bi bi-file-earmark-excel text-success me-2"></i>Exportar
+                                    a Excel (.xlsx)</a></li>
+                            <li><a
+                                    class="dropdown-item d-flex align-items-center"
+                                    href="javascript:void(0)"><i
+                                        class="bi bi-file-earmark-pdf text-danger me-2"></i>Exportar
+                                    a PDF</a></li>
+                        </ul>
+                    </div>
+                    <button type="button"
+                        class="btn btn-danger d-inline-flex align-items-center">
+                        <i class="bi bi-plus-circle-fill me-2"></i> Agregar
+                        Trabajador
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4 mt-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0"
+                        style="min-width: 800px;">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col" class="ps-4">DNI/RUC</th>
+                                <th scope="col">Nombres</th>
+                                <th scope="col">Apellido Paterno</th>
+                                <th scope="col">Apellido Materno</th> 
+                                <th scope="col">Celular</th>
+                                <th scope="col">Correo Electornico</th>
+                                <th scope="col"class="text-center">Cargo</th>
+                                <th scope="col"class="text-center">Estado</th>
+                                <th scope="col"class="text-center">fecha de Registro</th>
+                                <th scope="col"class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th scope="row" class="ps-4">74622233</th>
+                                <td>jose manuel</td>
+                                <td>Rodriguez</td>
+                                <td>peña</td>
+                                <td class="text-nowrap">987-654-321</td>
+                                <td>rodriguezpenajosemanuel62@gmail.com</td>
+                                <td class="text-center text-nowrap">Administrador</td>
+                                <td class="text-center text-nowrap"><span
+                                        class="badge bg-success">Activo</span></td>
+                                <td class="text-center text-nowrap">12/06/2024</td>
+                                <td class="text-center text-nowrap">
+                                    <button
+                                        class="btn btn-sm btn-outline-dark me-1"><i
+                                            class="bi bi-pencil"></i></button>
+                                    <button
+                                        class="btn btn-sm btn-outline-danger"><i
+                                            class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row" class="ps-4">45879652</th>
+                                <td>Jacob</td>
+                                <td>Thornton</td>
+                                <td>Otto</td>
+                                <td class="text-nowrap">951-753-852</td>
+                                <td class="text-center text-nowrap">jacobthornton@gmail.com</td>
+                                <td class="text-center text-nowrap">Vendedor</td>
+                                <td class="text-center text-nowrap"><span
+                                        class="badge bg-warning">Inactivo</span></td>
+                                <td class="text-center text-nowrap">15/06/2024</td>
+                                <td class="text-center text-nowrap">
+                                    <button
+                                        class="btn btn-sm btn-outline-dark me-1"><i
+                                            class="bi bi-pencil"></i></button>
+                                    <button
+                                        class="btn btn-sm btn-outline-danger"><i
+                                            class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th scope="row" class="ps-4">73415263</th>
+                                <td>John</td>
+                                <td>Doe</td>
+                                <td>Doe</td>             
+                                <td class="text-nowrap">963-852-741</td>
+                                <td class="text-center text-nowrap">jacobthornton@gmail.com</td>
+                                <td class="text-center text-nowrap">Vendedor</td>
+                                <td class="text-center text-nowrap"><span
+                                        class="badge bg-warning">Inactivo</span></td>
+                                <td class="text-center text-nowrap">15/06/2024</td>
+                                <td class="text-center text-nowrap">
+                                    <button
+                                        class="btn btn-sm btn-outline-dark me-1"><i
+                                            class="bi bi-pencil"></i></button>
+                                    <button
+                                        class="btn btn-sm btn-outline-danger"><i
+                                            class="bi bi-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
