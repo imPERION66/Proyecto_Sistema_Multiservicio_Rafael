@@ -1,0 +1,46 @@
+.card-config {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    border-radius: 12px;
+}
+
+.border-dashed {
+    border: 2px dashed #dee2e6 !important;
+    background: transparent;
+}
+
+.card-config:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.08) !important;
+    background-color: #fff;
+}
+
+.icon-container {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 20px;
+}
+
+.card-title {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.card-text {
+    line-height: 1.4;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 576px) {
+    .icon-container {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}

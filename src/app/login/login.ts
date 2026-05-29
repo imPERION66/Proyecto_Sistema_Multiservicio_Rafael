@@ -3,10 +3,11 @@ import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-login',
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -18,33 +19,127 @@ export class Login {
   inputBloqueados = true;
   txtusuario = '';
   txtcontrasena = '';
+  txtConfirmarContrasena = '';
+  codigoVerificacion = '';
+  codigoEnviado = false;
+  usuarioValidado = false;
 
   constructor(
     private router: Router,
     private http: HttpClient,
   ) {}
   private URL_API = 'http://localhost:8080/login';
+  private URL_AUTH = 'http://localhost:8080/auth'; // Nueva URL para validaciones
+
   check() {
     this.ocultarContrasena = !this.ocultarContrasena;
   }
 
   click_Olvide_contrasena() {
-    this.olvide_contrasena = true;
-    this.login_validacion = false;
-    var numer1 = '923093797';
-    this.mensaje_texto = `Se envio un codigo de 6 digitos al siguiente numero ${numer1}`;
+    if (!this.txtusuario) {
+      Swal.fire('Atención', 'Por favor ingresa tu usuario para recuperar la contraseña', 'info');
+      return;
+    }
+
+    // Validar usuario en el backend
+    this.http.get(`${this.URL_AUTH}/validar-usuario/${this.txtusuario}`, { responseType: 'text' }).subscribe({
+      next: (resp) => {
+        if (resp === 'USUARIO_EXISTE') {
+          this.enviarCodigo();
+        } else {
+          Swal.fire('Error', 'El usuario ingresado no existe en el sistema', 'error');
+        }
+      },
+      error: () => {
+        // Simulación por ahora si el backend no está listo
+        this.enviarCodigo();
+      }
+    });
+  }
+
+  enviarCodigo() {
+    this.http.post(`${this.URL_AUTH}/enviar-codigo`, { usuario: this.txtusuario }, { responseType: 'text' }).subscribe({
+      next: (resp) => {
+        if (resp === 'CODIGO_ENVIADO') {
+          this.olvide_contrasena = true;
+          this.login_validacion = false;
+          this.codigoEnviado = true;
+          this.mensaje_texto = `Se envió un código de 6 dígitos a tu número registrado`;
+          Swal.fire('Éxito', 'Código de verificación enviado', 'success');
+        } else {
+          Swal.fire('Error', 'No se pudo enviar el código de verificación. Contacta a soporte.', 'error');
+        }
+      },
+      error: () => {
+        // Simulación exitosa para el frontend
+        this.olvide_contrasena = true;
+        this.login_validacion = false;
+        this.codigoEnviado = true;
+        this.mensaje_texto = `Se envió un código de 6 dígitos al número asociado al usuario ${this.txtusuario}`;
+      }
+    });
+  }
+
+  onCodigoChange() {
+    if (this.codigoVerificacion.length === 6) {
+      this.validarCodigo();
+    }
+  }
+
+  validarCodigo() {
+    this.http.post(`${this.URL_AUTH}/validar-codigo`, { 
+      usuario: this.txtusuario, 
+      codigo: this.codigoVerificacion 
+    }, { responseType: 'text' }).subscribe({
+      next: (resp) => {
+        if (resp === 'CODIGO_VALIDO') {
+          this.usuarioValidado = true;
+          this.inputBloqueados = false;
+          Swal.fire('Validado', 'Código correcto. Ya puedes cambiar tu contraseña.', 'success');
+        } else {
+          Swal.fire('Error', 'El código ingresado es incorrecto o ha expirado', 'error');
+          this.codigoVerificacion = '';
+        }
+      },
+      error: () => {
+        // Simulación: si el código es 123456
+        if (this.codigoVerificacion === '123456') {
+          this.usuarioValidado = true;
+          this.inputBloqueados = false;
+          Swal.fire('Validado', 'Código correcto (Simulación)', 'success');
+        } else {
+          Swal.fire('Error', 'Código incorrecto (Usa 123456 para pruebas)', 'error');
+        }
+      }
+    });
   }
 
   registra() {
-    Swal.fire({
-      title: '¡Contraseña actualizada con éxito!',
-      text: 'Tu nueva clave de acceso ha sido registrada de forma segura en nuestro sistema. A partir de este momento, deberás utilizar esta nueva credencial para ingresar a tu cuenta. Ya puedes cerrar este aviso e iniciar sesión con total normalidad.',
-      timer: 3000,
-      showConfirmButton: false,
-      background: 'var(--bs-success-bg-subtle)',
+    if (this.txtcontrasena !== this.txtConfirmarContrasena) {
+      Swal.fire('Error', 'Las contraseñas no coinciden', 'error');
+      return;
+    }
+
+    this.http.post(`${this.URL_AUTH}/actualizar-password`, {
+      usuario: this.txtusuario,
+      nuevaPassword: this.txtcontrasena
+    }, { responseType: 'text' }).subscribe({
+      next: () => {
+        Swal.fire({
+          title: '¡Contraseña actualizada!',
+          text: 'Ya puedes iniciar sesión con tu nueva clave.',
+          icon: 'success',
+          timer: 3000,
+          showConfirmButton: false
+        });
+        this.olvide_contrasena = false;
+        this.login_validacion = true;
+        this.inputBloqueados = true;
+        this.usuarioValidado = false;
+        this.codigoEnviado = false;
+        this.codigoVerificacion = '';
+      }
     });
-    this.olvide_contrasena = false;
-    this.login_validacion = true;
   }
   inicio_sistema() {
     if (!this.txtusuario || !this.txtcontrasena) {

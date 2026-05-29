@@ -7,6 +7,11 @@ import { Trabajador } from './sistema/trabajador/trabajador';
 import { Proveedor } from './sistema/proveedor/proveedor';
 import { AgregarTrabajador } from './sistema/trabajador/agregar-trabajador/agregar-trabajador';
 import { EditarTrabajdor } from './sistema/trabajador/editar-trabajdor/editar-trabajdor';
+import { Producto } from './sistema/producto/producto';
+import { Configuracion } from './sistema/configuracion/configuracion';
+import { Servicio } from './sistema/servicio/servicio';
+import { Reabastecimiento } from './sistema/reabastecimiento/reabastecimiento';
+
 export const routes: Routes = [
     {
         path:'',redirectTo:'login',pathMatch:'full'
@@ -22,7 +27,22 @@ export const routes: Routes = [
             },
             {
                 path:"cliente",component:Cliente,
-                
+            },
+            {
+                path:"producto",component:Producto
+            },
+            {
+                path:"reabastecimiento",component:Reabastecimiento
+            },
+            {
+                path:"servicio",component:Servicio,
+                children: [
+                    { path: "venta", component: Servicio },
+                    { path: "mantenimiento", component: Servicio }
+                ]
+            },
+            {
+                path:"configuracion",component:Configuracion
             },
             {
                 path:"trabajador",component:Trabajador,

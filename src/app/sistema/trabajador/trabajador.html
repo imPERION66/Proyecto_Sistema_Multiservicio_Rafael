@@ -1,4 +1,3 @@
-
 <div>
     <nav class="navbar navbar-expand-lg bg-dark navbar-dark shadow-sm">
         <div class="container-fluid px-3 py-2">
@@ -66,7 +65,7 @@
                     </div>
                     <button type="button"
                         class="btn btn-danger d-inline-flex align-items-center"
-                        (click)="agregarTrabajador()">
+                        (click)="abrirModal()">
                         <i class="bi bi-plus-circle-fill me-2"></i> Agregar
                         Trabajador
                     </button>
@@ -113,11 +112,11 @@
                                     class="text-center text-nowrap">12/06/2024</td>
                                 <td class="text-center text-nowrap">
                                     <button
-                                        class="btn btn-sm btn-outline-dark me-1"><i
-                                            class="bi bi-pencil"></i></button>
+                                        class="btn btn-sm btn-outline-dark me-1" (click)="abrirModalEdit({dni:'74622233', nombre:'jose manuel', apellido_paterno:'Rodriguez', apellido_materno:'peña', celular:'987-654-321', correo:'rodriguezpenajosemanuel62@gmail.com', cargo:'Administrador', estado:'Activo'})">
+                                        <i class="bi bi-pencil"></i></button>
                                     <button
-                                        class="btn btn-sm btn-outline-danger"><i
-                                            class="bi bi-trash"></i></button>
+                                        class="btn btn-sm btn-outline-danger" (click)="eliminarTrabajador('74622233')">
+                                        <i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>
                             <tr>
@@ -136,34 +135,28 @@
                                     class="text-center text-nowrap">15/06/2024</td>
                                 <td class="text-center text-nowrap">
                                     <button
-                                        class="btn btn-sm btn-outline-dark me-1"><i
-                                            class="bi bi-pencil"></i></button>
+                                        class="btn btn-sm btn-outline-dark me-1" (click)="abrirModalEdit({dni:'45879652', nombre:'Jacob', apellido_paterno:'Thornton', apellido_materno:'Otto', celular:'951-753-852', correo:'jacobthornton@gmail.com', cargo:'Vendedor', estado:'Inactivo'})">
+                                        <i class="bi bi-pencil"></i></button>
                                     <button
-                                        class="btn btn-sm btn-outline-danger"><i
-                                            class="bi bi-trash"></i></button>
+                                        class="btn btn-sm btn-outline-danger" (click)="eliminarTrabajador('45879652')">
+                                        <i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>
                             <tr>
                                 <th scope="row" class="ps-4">73415263</th>
                                 <td>John</td>
                                 <td>Doe</td>
-                                <td>Doe</td>
+                                <td>Smith</td>
                                 <td class="text-nowrap">963-852-741</td>
-                                <td
-                                    class="text-center text-nowrap">jacobthornton@gmail.com</td>
-                                <td
-                                    class="text-center text-nowrap">Vendedor</td>
-                                <td class="text-center text-nowrap"><span
-                                        class="badge bg-warning">Inactivo</span></td>
-                                <td
-                                    class="text-center text-nowrap">15/06/2024</td>
+                                <td class="text-center text-nowrap">johndoe@gmail.com</td>
+                                <td class="text-center text-nowrap">Mecanico</td>
+                                <td class="text-center text-nowrap"><span class="badge bg-success">Activo</span></td>
+                                <td class="text-center text-nowrap">20/06/2024</td>
                                 <td class="text-center text-nowrap">
-                                    <button
-                                        class="btn btn-sm btn-outline-dark me-1"><i
-                                            class="bi bi-pencil"></i></button>
-                                    <button
-                                        class="btn btn-sm btn-outline-danger"><i
-                                            class="bi bi-trash"></i></button>
+                                    <button class="btn btn-sm btn-outline-dark me-1" (click)="abrirModalEdit({dni:'73415263', nombre:'John', apellido_paterno:'Doe', apellido_materno:'Smith', celular:'963-852-741', correo:'johndoe@gmail.com', cargo:'Mecanico', estado:'Activo'})">
+                                        <i class="bi bi-pencil"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger" (click)="eliminarTrabajador('73415263')">
+                                        <i class="bi bi-trash"></i></button>
                                 </td>
                             </tr>
                         </tbody>
@@ -174,6 +167,128 @@
     </div>
 </div>
 
-<div>
-    <router-outlet></router-outlet>
+<!-- Modal para Agregar Trabajador -->
+<div class="modal fade" [class.show]="mostrarModal" [style.display]="mostrarModal ? 'block' : 'none'" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-person-plus-fill me-2"></i> Nuevo Trabajador</h5>
+                <button type="button" class="btn-close btn-close-white" (click)="cerrarModal()"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form #trabajadorForm="ngForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tipo Documento</label>
+                            <select class="form-select" [(ngModel)]="nuevoTrabajador.id_documento" name="id_documento">
+                                <option *ngFor="let doc of documentos" [value]="doc.id">{{ doc.nombre }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Número Documento</label>
+                            <input type="text" class="form-control" placeholder="Ej: 74622233" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Nombres</label>
+                            <input type="text" class="form-control" [(ngModel)]="nuevoTrabajador.nombre" name="nombre" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Apellido Paterno</label>
+                            <input type="text" class="form-control" [(ngModel)]="nuevoTrabajador.apellido_paterno" name="apellido_paterno" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Apellido Materno</label>
+                            <input type="text" class="form-control" [(ngModel)]="nuevoTrabajador.apellido_materno" name="apellido_materno" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Celular</label>
+                            <input type="text" class="form-control" [(ngModel)]="nuevoTrabajador.celular" name="celular" placeholder="987-654-321">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Correo Electrónico</label>
+                            <input type="email" class="form-control" [(ngModel)]="nuevoTrabajador.correo" name="correo" placeholder="ejemplo@gmail.com">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Dirección</label>
+                            <input type="text" class="form-control" [(ngModel)]="nuevoTrabajador.direccion" name="direccion">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Cargo</label>
+                            <select class="form-select" [(ngModel)]="nuevoTrabajador.id_cargo" name="id_cargo">
+                                <option *ngFor="let cargo of cargos" [value]="cargo.id">{{ cargo.nombre }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Estado</label>
+                            <select class="form-select" [(ngModel)]="nuevoTrabajador.estado" name="estado">
+                                <option value="Activo">Activo</option>
+                                <option value="Inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary px-4" (click)="cerrarModal()">Cancelar</button>
+                <button type="button" class="btn btn-danger px-4" (click)="guardarTrabajador()">Guardar Trabajador</button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Modal para Editar Trabajador -->
+<div class="modal fade" [class.show]="mostrarModalEdit" [style.display]="mostrarModalEdit ? 'block' : 'none'" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white border-0">
+                <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2 text-danger"></i> Editar Trabajador</h5>
+                <button type="button" class="btn-close btn-close-white" (click)="cerrarModalEdit()"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form #trabajadorEditForm="ngForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Nombres</label>
+                            <input type="text" class="form-control" [(ngModel)]="trabajadorEditando.nombre" name="nombre_edit" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">DNI / RUC</label>
+                            <input type="text" class="form-control bg-light" [(ngModel)]="trabajadorEditando.dni" name="dni_edit" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Apellido Paterno</label>
+                            <input type="text" class="form-control" [(ngModel)]="trabajadorEditando.apellido_paterno" name="ap_edit" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Apellido Materno</label>
+                            <input type="text" class="form-control" [(ngModel)]="trabajadorEditando.apellido_materno" name="am_edit" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Celular</label>
+                            <input type="text" class="form-control" [(ngModel)]="trabajadorEditando.celular" name="cel_edit">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Cargo</label>
+                            <select class="form-select" [(ngModel)]="trabajadorEditando.id_cargo" name="cargo_edit">
+                                <option *ngFor="let cargo of cargos" [value]="cargo.id">{{ cargo.nombre }}</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Estado</label>
+                            <select class="form-select" [(ngModel)]="trabajadorEditando.estado" name="estado_edit">
+                                <option value="Activo">Activo</option>
+                                <option value="Inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary px-4" (click)="cerrarModalEdit()">Cancelar</button>
+                <button type="button" class="btn btn-danger px-4" (click)="actualizarTrabajador()">Actualizar Datos</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="mostrarModal || mostrarModalEdit" class="modal-backdrop fade show"></div>

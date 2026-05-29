@@ -9,26 +9,26 @@
         <ul class="nav nav-pills flex-column mb-auto">
             <li>
                 <a routerLink="/sistema/dashboard" class="nav-link text-white">
-                    Dashboard
+                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
                 </a>
             </li>
             <li>
                 <a
                     class="nav-link text-white d-flex justify-content-between align-items-center"
                     data-bs-toggle="collapse"
-                    href="#menuClientes">
-                    <span>Servicio</span>
+                    href="#menuServicios">
+                    <span><i class="bi bi-tools me-2"></i> Servicios</span>
                     <small>▼</small>
                 </a>
-                <div class="collapse" id="menuClientes">
+                <div class="collapse" id="menuServicios">
                     <ul class="list-unstyled ps-3">
                         <li>
-                            <a class="nav-link text-secondary">
+                            <a class="nav-link text-secondary" routerLink="/sistema/servicio/venta">
                                 Venta
                             </a>
                         </li>
                         <li>
-                            <a class="nav-link text-secondary">
+                            <a class="nav-link text-secondary" routerLink="/sistema/servicio/mantenimiento">
                                 Mantenimiento
                             </a>
                         </li>
@@ -36,29 +36,43 @@
                 </div>
             </li>
             <li>
-                <a class="nav-link text-white">Producto</a>
+                <a routerLink="/sistema/producto" class="nav-link text-white">
+                    <i class="bi bi-box-seam me-2"></i> Productos
+                </a>
+            </li>
+            <li>
+                <a routerLink="/sistema/reabastecimiento" class="nav-link text-white">
+                    <i class="bi bi-cart-plus me-2"></i> Reabastecimiento
+                </a>
             </li>
             <li>
                 <a routerLink="/sistema/proveedor" class="nav-link text-white">
-                    Proveedores
+                    <i class="bi bi-truck me-2"></i> Proveedores
                 </a>
             </li>
             <li>
                 <a routerLink="/sistema/cliente" class="nav-link text-white">
-                    Clientes
+                    <i class="bi bi-people me-2"></i> Clientes
                 </a>
             </li>
             <li>
                 <a routerLink="/sistema/trabajador" class="nav-link text-white">
-                    Trabajadores
+                    <i class="bi bi-person-badge me-2"></i> Trabajadores
+                </a>
+            </li>
+            <li>
+                <a routerLink="/sistema/configuracion" class="nav-link text-white">
+                    <i class="bi bi-gear me-2"></i> Configuraciones
                 </a>
             </li>
         </ul>
         <hr>
-        <button class="cerrar">
-            Cerrar Sesión
-            <i class="bi bi-door-open-fill"></i>
-        </button>
+        <div class="d-flex justify-content-center pb-3">
+            <button class="btn btn-danger w-75 d-flex align-items-center justify-content-center" (click)="cerrarSesion()">
+                <i class="bi bi-door-open-fill me-2"></i>
+                Cerrar Sesión
+            </button>
+        </div>
     </div>
     <div class="contenedor_informacion">
         <nav class="navbar  py-3 px-3" style="background-color: #ff3b30;">
@@ -99,23 +113,49 @@
                 <a routerLink="/sistema/dashboard"
                     data-bs-dismiss="offcanvas"
                     class="nav-link text-white">
-                    Dashboard
+                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
                 </a>
             </li>
-
+            <li>
+                <a routerLink="/sistema/producto"
+                    data-bs-dismiss="offcanvas"
+                    class="nav-link text-white">
+                    <i class="bi bi-box-seam me-2"></i> Productos
+                </a>
+            </li>
+            <li>
+                <a routerLink="/sistema/reabastecimiento"
+                    data-bs-dismiss="offcanvas"
+                    class="nav-link text-white">
+                    <i class="bi bi-cart-plus me-2"></i> Reabastecimiento
+                </a>
+            </li>
+            <li>
+                <a routerLink="/sistema/proveedor"
+                    data-bs-dismiss="offcanvas"
+                    class="nav-link text-white">
+                    <i class="bi bi-truck me-2"></i> Proveedores
+                </a>
+            </li>
             <li>
                 <a routerLink="/sistema/cliente"
                     data-bs-dismiss="offcanvas"
                     class="nav-link text-white">
-                    Clientes
+                    <i class="bi bi-people me-2"></i> Clientes
                 </a>
             </li>
-
             <li>
                 <a routerLink="/sistema/trabajador"
                     data-bs-dismiss="offcanvas"
                     class="nav-link text-white">
-                    Trabajadores
+                    <i class="bi bi-person-badge me-2"></i> Trabajadores
+                </a>
+            </li>
+            <li>
+                <a routerLink="/sistema/configuracion"
+                    data-bs-dismiss="offcanvas"
+                    class="nav-link text-white">
+                    <i class="bi bi-gear me-2"></i> Configuraciones
                 </a>
             </li>
         </ul>

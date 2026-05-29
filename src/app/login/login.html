@@ -41,31 +41,37 @@
     }
 
     @if(olvide_contrasena){
-    <div class="card p-4 rounded-4 shadow" style="width: 500px; height: 620px;">
+    <div class="card p-4 rounded-4 shadow" style="width: 500px; max-height: 90vh; overflow-y: auto;">
         <div class="text-center mb-1">
             <img src="logo/Logo.png" style="width: 250px; height: auto;"
                 alt="Logo de la empresa">
         </div>
-        <div class="px-4">
-            <p id="texto">{{mensaje_texto}}</p>
+        <div class="px-4 text-center mb-3">
+            <p id="texto" class="text-muted small">{{mensaje_texto}}</p>
         </div>
         <form class="px-4">
             <div class="mb-3">
-                <label for="codigo" class="form-label">Codigo</label>
-                <input type="text" class="form-control" id="codigo" name="codigo">
+                <label for="codigo" class="form-label fw-bold">Código de Verificación (6 dígitos)</label>
+                <input type="text" class="form-control text-center fs-4 letter-spacing-lg" 
+                       id="codigo" name="codigo" maxlength="6"
+                       [(ngModel)]="codigoVerificacion" (input)="onCodigoChange()"
+                       placeholder="000000">
+                <div *ngIf="codigoEnviado && !usuarioValidado" class="form-text text-primary">
+                    <i class="bi bi-info-circle me-1"></i> Ingresa el código para habilitar el cambio
+                </div>
             </div>
             <div class="mb-3">
-                <label for="contrasena" class="form-label">Nueva
-                    Contraseña</label>
+                <label for="contrasena" class="form-label">Nueva Contraseña</label>
                 <input [type]="ocultarContrasena ? 'password' : 'text'"
                     class="form-control" id="contrasena" name="contrasena"
+                    [(ngModel)]="txtcontrasena"
                     [disabled]="inputBloqueados">
             </div>
             <div class="mb-3">
-                <label for="contrasena2" class="form-label">Nueva
-                    Contraseña</label>
+                <label for="contrasena2" class="form-label">Confirmar Contraseña</label>
                 <input [type]="ocultarContrasena ? 'password' : 'text'"
-                    class="form-control" id="contrasena2"
+                    class="form-control" id="contrasena2" name="contrasena2"
+                    [(ngModel)]="txtConfirmarContrasena"
                     [disabled]="inputBloqueados">
             </div>
 
@@ -77,9 +83,10 @@
             </div>
             <div
                 class="txt-center d-flex justify-content-between align-items-center flex-row">
-                <button type="button" class="btn btn-primary w-40"
+                <button type="button" class="btn btn-outline-secondary px-4"
                     (click)="login_validacion=true; olvide_contrasena=false;">Regresar</button>
-                <button type="button" class="btn btn-primary w-40"
+                <button type="button" class="btn btn-primary px-4"
+                    [disabled]="!usuarioValidado"
                     (click)="registra()">Registrar</button>
             </div>
         </form>

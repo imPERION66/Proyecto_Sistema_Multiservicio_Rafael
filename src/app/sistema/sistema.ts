@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RouterOutlet, RouterLinkWithHref } from '@angular/router';
+import { RouterOutlet, RouterLinkWithHref, Router } from '@angular/router';
 
 @Component({
   selector: 'app-sistema',
@@ -7,4 +7,10 @@ import { RouterOutlet, RouterLinkWithHref } from '@angular/router';
   templateUrl: './sistema.html',
   styleUrl: './sistema.css',
 })
-export class Sistema {}
+export class Sistema {
+  constructor(private router: Router) {}
+
+  cerrarSesion() {
+    this.router.navigate(['/login']);
+  }
+}
