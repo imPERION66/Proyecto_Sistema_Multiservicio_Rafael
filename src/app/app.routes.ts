@@ -11,6 +11,7 @@ import { Producto } from './sistema/producto/producto';
 import { Configuracion } from './sistema/configuracion/configuracion';
 import { Servicio } from './sistema/servicio/servicio';
 import { Reabastecimiento } from './sistema/reabastecimiento/reabastecimiento';
+import { authGuard } from './auth.guard';
 
 export const routes: Routes = [
     {
@@ -21,7 +22,11 @@ export const routes: Routes = [
     },
     {
         path:'sistema',component:Sistema,
+        canActivate: [authGuard],
         children:[
+            {
+                path:"",redirectTo:"dashboard",pathMatch:"full"
+            },
             {
                 path:"dashboard",component:Dashboard
             },

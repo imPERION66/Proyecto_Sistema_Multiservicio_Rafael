@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -9,13 +10,46 @@ import Swal from 'sweetalert2';
   templateUrl: './producto.html',
   styleUrl: './producto.css',
 })
-export class Producto {
+export class Producto implements OnInit {
   filtroBusqueda: string = '';
   categoriaSeleccionada: string = 'Todas';
   mostrarModal = false;
   mostrarModalEdit = false;
+  productos: any[] = [];
+  categorias: string[] = [];
+  private platformId = inject(PLATFORM_ID);
+  private cdr = inject(ChangeDetectorRef);
+  
+  private URL_API = 'http://localhost:8080/api/productos';
 
-  categorias = ['Todas', 'Lubricantes', 'Repuestos', 'Filtros', 'Neumáticos', 'Frenos'];
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.cargarProductos();
+      this.cargarCategorias();
+    }
+  }
+
+  cargarProductos() {
+    this.http.get<any[]>(`${this.URL_API}/listar`).subscribe({
+      next: (data) => {
+        this.productos = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error al cargar productos:', err)
+    });
+  }
+
+  cargarCategorias() {
+    this.http.get<string[]>(`${this.URL_API}/categorias`).subscribe({
+      next: (data) => {
+        this.categorias = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error al cargar categorías:', err)
+    });
+  }
 
   nuevoProducto = {
     codigo: '',
@@ -88,41 +122,8 @@ export class Producto {
     });
   }
 
-  productos = [
-    {
-      codigo: 'ACE-001',
-      nombre: 'Aceite Motor 10W40',
-      marca: 'Castrol',
-      categoria: 'Lubricantes',
-      stock: 15,
-      stock_minimo: 10,
-      precio_venta: 35.50,
-      estado: 'Activo'
-    },
-    {
-      codigo: 'FIL-002',
-      nombre: 'Filtro de Aire Premium',
-      marca: 'Bosch',
-      categoria: 'Filtros',
-      stock: 5,
-      stock_minimo: 12,
-      precio_venta: 18.00,
-      estado: 'Activo'
-    },
-    {
-      codigo: 'PAS-003',
-      nombre: 'Pastillas de Freno',
-      marca: 'Brembo',
-      categoria: 'Frenos',
-      stock: 20,
-      stock_minimo: 8,
-      precio_venta: 120.00,
-      estado: 'Activo'
-    }
-  ];
-
   get productosFiltrados() {
-    return this.productos.filter(p => {
+    return this.productos.filter((p: any) => {
       const matchBusqueda = p.nombre.toLowerCase().includes(this.filtroBusqueda.toLowerCase()) || 
                            p.codigo.toLowerCase().includes(this.filtroBusqueda.toLowerCase());
       const matchCategoria = this.categoriaSeleccionada === 'Todas' || p.categoria === this.categoriaSeleccionada;

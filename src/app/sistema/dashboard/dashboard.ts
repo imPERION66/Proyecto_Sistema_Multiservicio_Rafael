@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
 import { ChartjsComponent } from '@coreui/angular-chartjs';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-dashboard',
@@ -8,13 +9,50 @@ import { CommonModule } from '@angular/common';
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
 })
-export class Dashboard {
+export class Dashboard implements OnInit {
   
-  /**
-   * AQUÍ DEBES CONECTAR EL BACKEND:
-   * Los datos de 'labels' y 'datasets' deben venir de una petición GET a tu API.
-   * Ejemplo: this.http.get('/api/stats/ventas-mensuales').subscribe(...)
-   */
+  private URL_DASHBOARD = 'http://localhost:8080/api/dashboard/estadisticas';
+  private platformId = inject(PLATFORM_ID);
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.cargarEstadisticas();
+    }
+  }
+
+  cargarEstadisticas() {
+    this.http.get<any>(this.URL_DASHBOARD).subscribe({
+      next: (data) => {
+        console.log('Estadísticas recibidas del Backend:', data);
+        
+        // Actualizar las tarjetas del dashboard
+        this.stats = [
+          { title: 'Ventas del Mes', value: `S/ ${data.totalVentas}`, icon: 'bi-cash-stack', color: 'text-success' },
+          { title: 'Total Clientes', value: data.totalClientes.toString(), icon: 'bi-people', color: 'text-primary' },
+          { title: 'Total Productos', value: data.totalProductos.toString(), icon: 'bi-box-seam', color: 'text-warning' },
+          { title: 'Bajo Stock', value: data.productosBajoStock.toString(), icon: 'bi-exclamation-triangle', color: 'text-danger' }
+        ];
+
+        // Actualizar el gráfico de ventas si los datos vienen en el formato esperado
+        if (data.ventasMensuales) {
+          this.ventasChartData = {
+            labels: data.ventasMensuales.labels,
+            datasets: [
+              {
+                label: 'Ventas S/',
+                backgroundColor: '#ff3b30',
+                borderColor: '#ff3b30',
+                data: data.ventasMensuales.data
+              }
+            ]
+          };
+        }
+      },
+      error: (err) => console.error('Error al cargar dashboard:', err)
+    });
+  }
 
   // 1. Gráfico de Ventas Mensuales (Basado en orden_venta y orden_servicio)
   ventasChartData = {

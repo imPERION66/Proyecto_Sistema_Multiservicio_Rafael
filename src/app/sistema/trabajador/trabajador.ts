@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -10,10 +11,20 @@ import Swal from 'sweetalert2';
   templateUrl: './trabajador.html',
   styleUrl: './trabajador.css',
 })
-export class Trabajador {
+export class Trabajador implements OnInit {
   mostrarModal = false;
   mostrarModalEdit = false;
-  
+  mostrarCamposUsuario = false;
+  filtroBusqueda: string = '';
+  cargoSeleccionado: string = '';
+  trabajadores: any[] = [];
+  documentos: any[] = [];
+  cargos: any[] = [];
+  private platformId = inject(PLATFORM_ID);
+  private cdr = inject(ChangeDetectorRef);
+
+  private URL_API = 'http://localhost:8080/api/trabajadores';
+
   // Datos del nuevo trabajador basados en la DB
   nuevoTrabajador = {
     id_documento: 1,
@@ -24,28 +35,66 @@ export class Trabajador {
     correo: '',
     direccion: '',
     id_cargo: 1,
-    estado: 'Activo'
+    estado: 'Activo',
+    usuario: '',
+    contrasena: '',
   };
 
   // Objeto para manejar la edición
   trabajadorEditando: any = {};
 
-  documentos = [
-    { id: 1, nombre: 'DNI' },
-    { id: 2, nombre: 'Pasaporte' },
-    { id: 3, nombre: 'Carnet Extranjería' }
-  ];
+  constructor(
+    private router: Router,
+    private http: HttpClient,
+  ) {}
 
-  cargos = [
-    { id: 1, nombre: 'Mecánico' },
-    { id: 2, nombre: 'Administrador' },
-    { id: 3, nombre: 'Vendedor' }
-  ];
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.cargarTrabajadores();
+      this.cargarDocumentos();
+      this.cargarCargos();
+    }
+  }
 
-  constructor(private router: Router) {}
+  cargarTrabajadores() {
+    this.http.get<any[]>(`${this.URL_API}/listar`).subscribe({
+      next: (data) => {
+        this.trabajadores = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error al cargar trabajadores:', err),
+    });
+  }
+
+  cargarDocumentos() {
+    this.http.get<any[]>(`${this.URL_API}/documentos`).subscribe({
+      next: (data) => {
+        this.documentos = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error al cargar documentos:', err),
+    });
+  }
+
+  cargarCargos() {
+    this.http.get<any[]>(`${this.URL_API}/cargos`).subscribe({
+      next: (data) => {
+        this.cargos = data;
+        this.cdr.detectChanges();
+      },
+      error: (err) => console.error('Error al cargar cargos:', err),
+    });
+  }
+
+  onCargoChange() {
+    // Show username/password fields only for Administrador (id: 2) or Vendedor (id: 3)
+    this.mostrarCamposUsuario =
+      this.nuevoTrabajador.id_cargo === 2 || this.nuevoTrabajador.id_cargo === 3;
+  }
 
   abrirModal() {
     this.mostrarModal = true;
+    this.mostrarCamposUsuario = false;
   }
 
   cerrarModal() {
@@ -72,8 +121,11 @@ export class Trabajador {
       correo: '',
       direccion: '',
       id_cargo: 1,
-      estado: 'Activo'
+      estado: 'Activo',
+      usuario: '',
+      contrasena: '',
     };
+    this.mostrarCamposUsuario = false;
   }
 
   /**
@@ -104,13 +156,13 @@ export class Trabajador {
   eliminarTrabajador(id: any) {
     Swal.fire({
       title: '¿Estás seguro?',
-      text: "Esta acción no se puede deshacer",
+      text: 'Esta acción no se puede deshacer',
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ff3b30',
       cancelButtonColor: '#6c757d',
       confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      cancelButtonText: 'Cancelar',
     }).then((result: any) => {
       if (result.isConfirmed) {
         console.log('Enviando petición de eliminación al backend (DELETE /trabajador/' + id + ')');

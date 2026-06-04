@@ -3,47 +3,50 @@
     style="min-height: 100vh;">
 
     @if(login_validacion){
-    <div class="card p-4 rounded-4 shadow" style="width: 500px; height: 600px;">
-
+    <div class="card p-4 rounded-4 shadow-lg border-0" style="width: 100%; max-width: 450px; min-height: 500px;">
         <div class="text-center mb-4">
-            <img src="logo/Logo.png" style="width: 300px; height: auto;"
-                alt="logo/Logo.png">
+            <img src="logo/Logo.png" class="img-fluid" style="max-width: 250px;"
+                alt="Logo de la empresa">
         </div>
-
-        <form class="px-4">
-            <div class="mb-3">
-                <label for="usuario" class="form-label">Usuario</label>
-                <input type="text" class="form-control" [(ngModel)]="txtusuario" id="usuario" name="usuario">
+        <form class="px-2">
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="usuario" name="usuario"
+                    [(ngModel)]="txtusuario" placeholder="Usuario">
+                <label for="usuario">Usuario</label>
             </div>
-
-            <div class="mb-3">
-                <label for="contrasena" class="form-label">Contraseña</label>
+            <div class="form-floating mb-3 position-relative">
                 <input [type]="ocultarContrasena ? 'password' : 'text'"
-                    class="form-control" [(ngModel)]="txtcontrasena" id="contrasena" name="contrasena">
+                    class="form-control" id="contrasena" name="contrasena"
+                    [(ngModel)]="txtcontrasena" placeholder="Contraseña">
+                <label for="contrasena">Contraseña</label>
+                <button type="button" class="btn position-absolute top-50 end-0 translate-middle-y border-0 bg-transparent pe-3" (click)="check()">
+                    <i class="bi" [class.bi-eye-slash]="ocultarContrasena" [class.bi-eye]="!ocultarContrasena"></i>
+                </button>
             </div>
 
-            <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input"
-                    id="mostrar_contrasena" (change)="check()">
-                <label class="form-check-label" for="mostrar_contrasena">Mostrar
-                    contraseña</label>
+            <div class="text-center mb-4">
+                <button type="button" class="btn btn-danger w-100 py-2 fw-bold shadow-sm"
+                    (click)="login()">
+                    <i class="bi bi-box-arrow-in-right me-2"></i> Iniciar Sesión
+                </button>
             </div>
 
-            <button type="button" class="btn btn-primary w-100" (click)="inicio_sistema()">Iniciar
-                Sesión</button>
-            <div class="text-center p-3">
-                <a href="javascript:void(0)"
-                    (click)="click_Olvide_contrasena()">¿Olvide Contraseña?</a>
+            <div class="hr-text text-muted mb-4 small">¿Olvidaste tu acceso?</div>
+
+            <div class="text-center">
+                <button type="button" class="btn btn-outline-dark w-100 py-2 fw-bold" 
+                   (click)="click_Olvide_contrasena()">
+                   Recuperar Acceso <i class="bi bi-shield-lock ms-2"></i>
+                </button>
             </div>
         </form>
-
     </div>
     }
 
     @if(olvide_contrasena){
-    <div class="card p-4 rounded-4 shadow" style="width: 500px; max-height: 90vh; overflow-y: auto;">
+    <div class="card p-4 rounded-4 shadow-lg border-0" style="width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
         <div class="text-center mb-1">
-            <img src="logo/Logo.png" style="width: 250px; height: auto;"
+            <img src="logo/Logo.png" style="max-width: 250px; height: auto;"
                 alt="Logo de la empresa">
         </div>
         <div class="px-4 text-center mb-3">

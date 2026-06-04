@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -9,8 +10,12 @@ import Swal from 'sweetalert2';
   templateUrl: './cliente.html',
   styleUrl: './cliente.css',
 })
-export class Cliente {
+export class Cliente implements OnInit {
   mostrarModalEdit = false;
+  filtroBusqueda: string = '';
+  clientes: any[] = [];
+  private platformId = inject(PLATFORM_ID);
+  private cdr = inject(ChangeDetectorRef);
   
   clienteEditando = {
     dni: '',
@@ -20,6 +25,26 @@ export class Cliente {
     celular: '',
     correo: ''
   };
+  
+  private URL_API = 'http://localhost:8080/api/clientes';
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.cargarClientes();
+    }
+  }
+
+  cargarClientes() {
+    this.http.get<any[]>(`${this.URL_API}/listar`).subscribe({
+      next: (data) => {
+        this.clientes = data;
+        this.cdr.detectChanges(); // Forzar actualización de la UI inmediatamente
+      },
+      error: (err) => console.error('Error al cargar clientes:', err)
+    });
+  }
 
   abrirModalEdit(cliente: any) {
     this.clienteEditando = { ...cliente };

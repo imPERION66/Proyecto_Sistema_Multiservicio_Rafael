@@ -45,32 +45,33 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let p of productosFiltrados">
-                        <td class="ps-4 fw-bold">{{ p.codigo }}</td>
+                    <tr *ngFor="let prod of productos">
+                        <td class="ps-4 fw-bold text-danger">{{ prod.codigo }}</td>
                         <td>
-                            <div class="fw-bold">{{ p.nombre }}</div>
-                            <div class="small text-muted">{{ p.marca }}</div>
+                            <div class="fw-bold">{{ prod.nombre }}</div>
+                            <div class="small text-muted">{{ prod.marca }}</div>
                         </td>
-                        <td><span class="badge bg-light text-dark border">{{ p.categoria }}</span></td>
-                        <td class="text-center">
-                            <span [class.text-danger]="p.stock < p.stock_minimo" class="fw-bold">
-                                {{ p.stock }}
-                            </span>
-                            <div class="progress mt-1" style="height: 4px; width: 60px; margin: 0 auto;">
-                                <div class="progress-bar" [class.bg-danger]="p.stock < p.stock_minimo" [class.bg-success]="p.stock >= p.stock_minimo"
-                                    [style.width.%]="(p.stock / (p.stock_minimo * 2)) * 100"></div>
+                        <td><span class="badge bg-light text-dark border">{{ prod.categoria }}</span></td>
+                        <td>
+                            <div class="fw-bold" [class.text-danger]="prod.stock <= prod.stock_minimo">
+                                {{ prod.stock }} unidades
+                            </div>
+                            <div class="progress mt-1" style="height: 4px; width: 100px;">
+                                <div class="progress-bar" [class.bg-danger]="prod.stock <= prod.stock_minimo" 
+                                     [class.bg-success]="prod.stock > prod.stock_minimo"
+                                     [style.width.%]="(prod.stock / 50) * 100"></div>
                             </div>
                         </td>
-                        <td class="text-center fw-bold text-success">S/ {{ p.precio_venta | number:'1.2-2' }}</td>
-                        <td class="text-center">
-                            <span class="badge" [class.bg-success]="p.estado === 'Activo'" [class.bg-secondary]="p.estado !== 'Activo'">
-                                {{ p.estado }}
+                        <td class="fw-bold text-dark">S/ {{ prod.precio_venta | number:'1.2-2' }}</td>
+                        <td>
+                            <span class="badge" [class.bg-success]="prod.estado === 'Activo'" [class.bg-secondary]="prod.estado !== 'Activo'">
+                                {{ prod.estado }}
                             </span>
                         </td>
                         <td class="text-center">
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-dark" (click)="abrirModalEdit(p)"><i class="bi bi-pencil"></i></button>
-                                <button class="btn btn-sm btn-outline-danger" (click)="eliminarProducto(p.codigo)"><i class="bi bi-trash"></i></button>
+                                <button class="btn btn-sm btn-outline-dark" (click)="abrirModalEdit(prod)"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" (click)="eliminarProducto(prod.codigo)"><i class="bi bi-trash"></i></button>
                             </div>
                         </td>
                     </tr>

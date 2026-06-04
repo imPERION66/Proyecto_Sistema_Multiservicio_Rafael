@@ -6,14 +6,14 @@
                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
                 <input type="text" class="form-control border-start-0" placeholder="Buscar por nombre o RUC..." [(ngModel)]="filtroBusqueda">
             </div>
-            <button class="btn btn-danger d-flex align-items-center">
+            <button class="btn btn-danger d-flex align-items-center" (click)="agregarProveedor()">
                 <i class="bi bi-plus-circle me-2"></i> Agregar Proveedor
             </button>
         </div>
     </div>
 
     <div class="row g-4">
-        <div *ngFor="let prov of proveedoresFiltrados" class="col-12 col-md-6 col-lg-4">
+        <div *ngFor="let prov of proveedores" class="col-12 col-md-6 col-lg-4">
             <div class="card h-100 shadow-sm border-0 provider-card">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -41,8 +41,8 @@
                     </div>
                 </div>
                 <div class="card-footer bg-light border-0 d-flex justify-content-end gap-2 p-3">
-                    <button class="btn btn-sm btn-outline-dark"><i class="bi bi-pencil me-1"></i> Editar</button>
-                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i> Eliminar</button>
+                    <button class="btn btn-sm btn-outline-dark" (click)="editarProveedor(prov)"><i class="bi bi-pencil me-1"></i> Editar</button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="eliminarProveedor(prov.ruc)"><i class="bi bi-trash me-1"></i> Eliminar</button>
                 </div>
             </div>
         </div>
