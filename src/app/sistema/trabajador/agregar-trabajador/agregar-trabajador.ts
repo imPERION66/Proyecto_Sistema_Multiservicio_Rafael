@@ -1,4 +1,8 @@
+<<<<<<< robert/frontend-avance
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+=======
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+>>>>>>> main
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -13,8 +17,20 @@ import Swal from 'sweetalert2';
 })
 export class AgregarTrabajador implements OnInit {
   URL_API = 'http://localhost:8080/api/trabajadores';
+
   documentos: any[] = [];
   cargos: any[] = [];
+
+  correoValidado = false;
+  correoEnviado = false;
+  validandoCorreo = false;
+
+  dniValidado = false;
+  errorDni = false;
+  errorCelular = false;
+  errorCorreo = false;
+
+  private cdr = inject(ChangeDetectorRef);
 
   nuevoTrabajador: any = {
     id_documento: 1,
@@ -24,27 +40,16 @@ export class AgregarTrabajador implements OnInit {
     apellido_materno: '',
     celular: '',
     correo: '',
-    direccion: '',
     id_cargo: 1,
     estado: 'Activo',
     usuario: '',
     contrasena: '',
   };
 
-  private cdr = inject(ChangeDetectorRef);
   constructor(
-    private router: Router,
     private http: HttpClient,
+    private router: Router,
   ) {}
-
-  // Menús para asignar y selección temporal
-  menus: any[] = [];
-  selectedMenus: any[] = [];
-  mostrarModalMenus = false;
-
-  onCargoChange() {
-    // mostrar campos de usuario solo para cargos 2 y 3
-  }
 
   ngOnInit() {
     this.cargarDocumentos();
@@ -53,76 +58,163 @@ export class AgregarTrabajador implements OnInit {
 
   cargarDocumentos() {
     this.http.get<any[]>(`${this.URL_API}/documentos`).subscribe({
-      next: (data) => {
-        this.documentos = data || [];
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error(err),
+      next: (r) => (this.documentos = r || []),
+      error: () => Swal.fire('Error', 'No se pudieron cargar documentos', 'error'),
     });
   }
 
   cargarCargos() {
     this.http.get<any[]>(`${this.URL_API}/cargos`).subscribe({
-      next: (data) => {
-        this.cargos = data || [];
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error(err),
+      next: (r) => (this.cargos = r || []),
+      error: () => Swal.fire('Error', 'No se pudieron cargar cargos', 'error'),
     });
   }
 
-  cargarMenus(callback?: () => void) {
-    this.http.post<string[]>('http://localhost:8080/api/menus/lista-menus', {}).subscribe({
-      next: (data) => {
-        this.menus = data || [];
+  validarDni() {
+    let dni = this.nuevoTrabajador.numeroDocumento.replace(/\D/g, '');
+    this.nuevoTrabajador.numeroDocumento = dni;
+    this.errorDni = !/^\d{8}$/.test(dni);
 
-        this.cdr.detectChanges();
+    // Si el DNI no es válido, desbloqueamos los campos limpiándolos
+    if (this.errorDni) {
+      this.dniValidado = false;
+      this.nuevoTrabajador.nombre = '';
+      this.nuevoTrabajador.apellido_paterno = '';
+      this.nuevoTrabajador.apellido_materno = '';
+      return;
+    }
 
-        if (callback) {
-          callback();
+    this.http.get<any>(`${this.URL_API}/buscar-dni/${dni}`).subscribe({
+      next: (res) => {
+        if (res && res.success) {
+          this.dniValidado = true; // Al ser true, el [readonly] en HTML bloqueará los campos
+          this.nuevoTrabajador.nombre = res.nombres;
+          this.nuevoTrabajador.apellido_paterno = res.apellidoPaterno;
+          this.nuevoTrabajador.apellido_materno = res.apellidoMaterno;
+          this.cdr.detectChanges();
+        } else {
+          this.dniValidado = false;
+          Swal.fire('DNI', 'No se encontró información', 'warning');
         }
       },
-
-      error: (err) => {
-        console.error(err);
+      error: () => {
+        this.dniValidado = false;
+        Swal.fire('DNI', 'No se encontró información', 'warning');
       },
     });
   }
 
-  abrirModalMenus() {
-    this.selectedMenus = Array.isArray(this.nuevoTrabajador.menuIds)
-      ? this.nuevoTrabajador.menuIds.slice()
-      : [];
-    if (!this.menus || this.menus.length === 0) this.cargarMenus();
-    this.mostrarModalMenus = true;
+  validarCelular() {
+    let celular = this.nuevoTrabajador.celular.replace(/\D/g, '');
+    this.nuevoTrabajador.celular = celular;
+    this.errorCelular = !/^[9]\d{8}$/.test(celular);
   }
 
-  cerrarModalMenus() {
-    this.mostrarModalMenus = false;
+  validarCorreo() {
+    this.correoValidado = false;
+    this.errorCorreo = !this.correoValido;
   }
 
-  toggleMenuSeleccion(menu: string) {
-    const idx = this.selectedMenus.indexOf(menu);
-    if (idx === -1) {
-      this.selectedMenus.push(menu);
-    } else {
-      this.selectedMenus.splice(idx, 1);
+  get correoValido(): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.nuevoTrabajador.correo);
+  }
+
+  validarCorreoBackend() {
+    if (!this.correoValido) {
+      this.errorCorreo = true;
+      return;
+    }
+    this.validandoCorreo = true;
+    // Enviamos tanto el correo como el DNI al backend
+    this.http
+      .post(
+        `${this.URL_API}/correo/enviar`,
+        {
+          correo: this.nuevoTrabajador.correo,
+          dni: this.nuevoTrabajador.numeroDocumento,
+        },
+        { responseType: 'text' },
+      )
+      .subscribe({
+        next: (res) => {
+          this.validandoCorreo = false;
+          if (res === 'CODIGO_ENVIADO') {
+            this.correoEnviado = true;
+            Swal.fire({
+              title: 'Validar correo',
+              input: 'text',
+              inputLabel: 'Ingrese código de 6 dígitos',
+              inputAttributes: { maxlength: '6' },
+              allowOutsideClick: false,
+              showCancelButton: true,
+            }).then((r) => {
+              if (r.isConfirmed && r.value) this.validarCodigo(r.value);
+            });
+          }
+        },
+        error: () => {
+          this.validandoCorreo = false;
+          Swal.fire('Error', 'No se pudo enviar el correo', 'error');
+        },
+      });
+  }
+
+  validarCodigo(codigo: string) {
+    this.http
+      .post(
+        `${this.URL_API}/correo/validar`,
+        {
+          dni: this.nuevoTrabajador.numeroDocumento, 
+          codigo,
+        },
+        { responseType: 'text' },
+      )
+      .subscribe({
+        next: (respuesta) => {
+          if (respuesta === 'CODIGO_VALIDO') {
+            this.correoValidado = true;
+            Swal.fire('Correcto', 'Correo validado', 'success');
+          } else {
+            Swal.fire('Error', 'Código incorrecto', 'error');
+          }
+        },
+        error: () => Swal.fire('Error', 'No se pudo validar', 'error'),
+      });
+  }
+
+  datosValidos(): boolean {
+    return (
+      this.dniValidado &&
+      this.correoValidado &&
+      !this.errorCelular &&
+      this.nuevoTrabajador.nombre &&
+      this.nuevoTrabajador.celular
+    );
+  }
+
+  guardarTrabajador() {
+    if (!this.datosValidos()) {
+      Swal.fire('Formulario incompleto', 'Revise todos los campos', 'warning');
+      return;
+    }
+    this.http.post(`${this.URL_API}/crear`, this.nuevoTrabajador).subscribe({
+      next: () => {
+        Swal.fire('Guardado', 'Trabajador registrado', 'success').then(() => {
+          this.router.navigate(['/sistema/trabajador']);
+        });
+      },
+      error: () => Swal.fire('Error', 'No se pudo registrar', 'error'),
+    });
+  }
+
+  onCargoChange() {
+    if (this.nuevoTrabajador.id_cargo !== 2 && this.nuevoTrabajador.id_cargo !== 3) {
+      this.nuevoTrabajador.usuario = '';
+      this.nuevoTrabajador.contrasena = '';
     }
   }
 
   cerrarModal() {
     this.router.navigate(['/sistema/trabajador']);
-  }
-
-  guardarTrabajador() {
-    this.nuevoTrabajador.menuIds = [...this.selectedMenus];
-    console.log(this.nuevoTrabajador);
-
-    this.http.post(`${this.URL_API}/crear`, this.nuevoTrabajador).subscribe({
-      next: () => {
-        Swal.fire('Guardado', 'Trabajador registrado', 'success');
-        this.router.navigate(['/sistema/trabajador']);
-      },
-    });
   }
 }
