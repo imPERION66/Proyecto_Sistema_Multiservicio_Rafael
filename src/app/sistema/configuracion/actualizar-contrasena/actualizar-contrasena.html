@@ -1,0 +1,34 @@
+<div class="contenedor-centrado">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center p-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="bi bi-key-fill me-2"></i> Actualizar Contraseña
+            </h5>
+            <button type="button" class="btn-close btn-close-white" (click)="cerrar()"></button>
+        </div>
+
+        <div class="card-body p-4">
+            <form>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-secondary">Contraseña Actual</label>
+                    <input type="password" class="form-control" [(ngModel)]="contrasenaActual" name="actual" placeholder="Ingrese su contraseña actual">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-secondary">Nueva Contraseña</label>
+                    <input type="password" class="form-control" [(ngModel)]="nuevaContrasena" name="nueva" placeholder="Mínimo 6 caracteres">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-secondary">Confirmar Nueva Contraseña</label>
+                    <input type="password" class="form-control" [(ngModel)]="confirmarContrasena" name="confirmar" placeholder="Repita la nueva contraseña">
+                </div>
+                
+                <div class="d-grid">
+                    <button class="btn btn-danger py-2 fw-bold" (click)="actualizarContrasena()" [disabled]="actualizando">
+                        <span *ngIf="actualizando" class="spinner-border spinner-border-sm me-2"></span>
+                        {{ actualizando ? 'Procesando...' : 'Actualizar Contraseña' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

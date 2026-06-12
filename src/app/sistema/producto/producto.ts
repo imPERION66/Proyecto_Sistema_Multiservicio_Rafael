@@ -2,27 +2,38 @@ import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angu
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-producto',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterOutlet],
   templateUrl: './producto.html',
   styleUrl: './producto.css',
 })
 export class Producto implements OnInit {
-  filtroBusqueda: string = '';
-  categoriaSeleccionada: string = 'Todas';
-  mostrarModal = false;
-  mostrarModalEdit = false;
+  filtroBusqueda = '';
+  categoriaSeleccionada = 'Todas';
   productos: any[] = [];
-  categorias: string[] = [];
+  categorias: string[] = ['Todas'];
+  mostrarModalRuta = false;
+
   private platformId = inject(PLATFORM_ID);
   private cdr = inject(ChangeDetectorRef);
-  
   private URL_API = 'http://localhost:8080/api/productos';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, public router: Router) {
+    this.router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe((e: any) => {
+        const url = e.urlAfterRedirects || e.url || '';
+        this.mostrarModalRuta =
+          url.includes('agregar-producto') ||
+          url.includes('editar-producto');
+        if (!this.mostrarModalRuta) this.cargarProductos();
+      });
+  }
 
   ngOnInit() {
     if (isPlatformBrowser(this.platformId)) {
@@ -33,81 +44,47 @@ export class Producto implements OnInit {
 
   cargarProductos() {
     this.http.get<any[]>(`${this.URL_API}/listar`).subscribe({
-      next: (data) => {
-        this.productos = data;
-        this.cdr.detectChanges();
-      },
+      next: (data) => { this.productos = data; this.cdr.detectChanges(); },
       error: (err) => console.error('Error al cargar productos:', err)
     });
   }
 
   cargarCategorias() {
-    this.http.get<string[]>(`${this.URL_API}/categorias`).subscribe({
+    this.http.get<any[]>(`${this.URL_API}/categorias`).subscribe({
       next: (data) => {
-        this.categorias = data;
+        this.categorias = ['Todas', ...data.map((c: any) => c.nombre)];
         this.cdr.detectChanges();
       },
       error: (err) => console.error('Error al cargar categorías:', err)
     });
   }
 
-  nuevoProducto = {
-    codigo: '',
-    nombre: '',
-    marca: '',
-    id_categoria: 1,
-    cantidad: 0,
-    precio_compra: 0,
-    precio_venta: 0,
-    stock_minimo: 5,
-    estado: 'Activo'
-  };
+  get productosFiltrados() {
+    return this.productos.filter((p: any) => {
+      const matchBusqueda =
+        p.nombre?.toLowerCase().includes(this.filtroBusqueda.toLowerCase()) ||
+        p.codigo?.toLowerCase().includes(this.filtroBusqueda.toLowerCase());
+      const matchCategoria =
+        this.categoriaSeleccionada === 'Todas' || p.categoria === this.categoriaSeleccionada;
+      return matchBusqueda && matchCategoria;
+    });
+  }
 
-  productoEditando: any = {};
-
-  abrirModal() { this.mostrarModal = true; }
-  cerrarModal() { this.mostrarModal = false; this.resetForm(); }
+  abrirModal() {
+    this.router.navigate(['/sistema/producto/agregar-producto']);
+  }
 
   abrirModalEdit(producto: any) {
-    this.productoEditando = { ...producto };
-    this.mostrarModalEdit = true;
-  }
-  cerrarModalEdit() { this.mostrarModalEdit = false; }
-
-  resetForm() {
-    this.nuevoProducto = {
-      codigo: '', nombre: '', marca: '', id_categoria: 1,
-      cantidad: 0, precio_compra: 0, precio_venta: 0,
-      stock_minimo: 5, estado: 'Activo'
-    };
+    this.router.navigate(
+      ['/sistema/producto/editar-producto', producto.codigo],
+      { state: { producto } }
+    );
   }
 
-  /**
-   * Envía el nuevo producto al backend (POST /repuesto).
-   * La fecha de registro es manejada por la DB.
-   */
-  guardarProducto() {
-    console.log('Enviando nuevo producto al backend:', this.nuevoProducto);
-    Swal.fire('Guardado', 'Producto registrado en el inventario', 'success');
-    this.cerrarModal();
-  }
-
-  /**
-   * Actualiza los datos de un producto (PUT /repuesto).
-   */
-  actualizarProducto() {
-    console.log('Enviando actualización de producto al backend:', this.productoEditando);
-    Swal.fire('Actualizado', 'Producto actualizado correctamente', 'success');
-    this.cerrarModalEdit();
-  }
-
-  /**
-   * Confirmación de eliminación (DELETE /repuesto/{id}).
-   */
   eliminarProducto(codigo: string) {
     Swal.fire({
       title: '¿Eliminar producto?',
-      text: "El producto con código " + codigo + " será retirado del inventario.",
+      text: `El producto ${codigo} será retirado del inventario.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#ff3b30',
@@ -116,18 +93,14 @@ export class Producto implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result: any) => {
       if (result.isConfirmed) {
-        console.log('Enviando eliminación al backend para código:', codigo);
-        Swal.fire('Eliminado', 'Producto eliminado', 'success');
+        this.http.delete(`${this.URL_API}/eliminar/${codigo}`, { responseType: 'text' }).subscribe({
+          next: () => {
+            Swal.fire({ icon: 'success', title: 'Producto eliminado', timer: 1800, showConfirmButton: false });
+            this.cargarProductos();
+          },
+          error: () => Swal.fire('Error', 'No se pudo eliminar el producto.', 'error')
+        });
       }
-    });
-  }
-
-  get productosFiltrados() {
-    return this.productos.filter((p: any) => {
-      const matchBusqueda = p.nombre.toLowerCase().includes(this.filtroBusqueda.toLowerCase()) || 
-                           p.codigo.toLowerCase().includes(this.filtroBusqueda.toLowerCase());
-      const matchCategoria = this.categoriaSeleccionada === 'Todas' || p.categoria === this.categoriaSeleccionada;
-      return matchBusqueda && matchCategoria;
     });
   }
 }

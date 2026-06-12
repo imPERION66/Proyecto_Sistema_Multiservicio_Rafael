@@ -1,9 +1,372 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-agregar-trabajador',
-  imports: [],
+  imports: [CommonModule, FormsModule],
   templateUrl: './agregar-trabajador.html',
   styleUrl: './agregar-trabajador.css',
 })
-export class AgregarTrabajador {}
+export class AgregarTrabajador implements OnInit {
+  URL_API = 'http://localhost:8080/api/trabajadores';
+  URL_ROLES = 'http://localhost:8080/api/configuracion/roles/listar';
+
+  documentos: any[] = [];
+  cargos: any[] = [];
+  roles: any[] = [];
+
+  correoValidado = false;
+  validandoCorreo = false;
+  consultandoDni = false;
+
+  dniValidado = false;
+  errorDni = false;
+  errorCelular = false;
+  errorCorreo = false;
+  permiteEdicionManual = false;
+
+  private cdr = inject(ChangeDetectorRef);
+
+  nuevoTrabajador: any = {
+    id_documento: null,
+    numeroDocumento: '',
+    nombre: '',
+    apellido_paterno: '',
+    apellido_materno: '',
+    celular: '',
+    correo: '',
+    direccion: '',
+    id_cargo: null,
+    estado: 'Activo',
+    usuario: '',
+    contrasena: '',
+  };
+
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+  ) {}
+
+  ngOnInit() {
+    this.cargarDocumentos();
+    this.cargarCargos();
+    this.cargarRoles();
+  }
+
+  cargarDocumentos() {
+    this.http.get<any[]>(`${this.URL_API}/documentos`).subscribe({
+      next: (r) => {
+        this.documentos = r || [];
+        if (this.documentos.length > 0 && !this.nuevoTrabajador.id_documento) {
+          this.nuevoTrabajador.id_documento = this.documentos[0].id;
+        }
+      },
+      error: () => Swal.fire('Error', 'No se pudieron cargar documentos', 'error'),
+    });
+  }
+
+  cargarCargos() {
+    this.http.get<any[]>(`${this.URL_API}/cargos`).subscribe({
+      next: (r) => {
+        this.cargos = r || [];
+        if (this.cargos.length > 0 && !this.nuevoTrabajador.id_cargo) {
+          this.nuevoTrabajador.id_cargo = this.cargos[0].id;
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => Swal.fire('Error', 'No se pudieron cargar cargos', 'error'),
+    });
+  }
+
+  cargarRoles() {
+    this.http.get<any[]>(this.URL_ROLES).subscribe({
+      next: (r) => {
+        this.roles = r || [];
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  validarDni() {
+    const dni = this.nuevoTrabajador.numeroDocumento.replace(/\D/g, '');
+    this.nuevoTrabajador.numeroDocumento = dni;
+    this.errorDni = !/^\d{8}$/.test(dni);
+    this.dniValidado = false;
+
+    if (this.errorDni) {
+      this.limpiarDatosPersona();
+      return;
+    }
+
+    this.consultandoDni = true;
+    this.http.get<{ existe: boolean }>(`${this.URL_API}/validar-dni/${dni}`).subscribe({
+      next: (res) => {
+        if (res.existe) {
+          this.consultandoDni = false;
+          this.limpiarDatosPersona();
+          Swal.fire('DNI registrado', 'Este DNI ya existe en el sistema', 'warning');
+          this.cdr.detectChanges();
+          return;
+        }
+        // Si no existe en la base de datos, buscar en la API externa
+        this.http.get<any>(`${this.URL_API}/buscar-dni/${dni}`).subscribe({
+          next: (data) => {
+            this.consultandoDni = false;
+            if (data && data.success) {
+              this.dniValidado = true;
+              this.nuevoTrabajador.nombre = data.nombres || '';
+              this.nuevoTrabajador.apellido_paterno = data.apellidoPaterno || '';
+              this.nuevoTrabajador.apellido_materno = data.apellidoMaterno || '';
+              Swal.fire('DNI validado', 'Información obtenida de RENIEC', 'success');
+            } else {
+              this.limpiarDatosPersona();
+              Swal.fire('DNI no encontrado', 'No se encontró información en RENIEC. Puede ingresar los datos manualmente.', 'info');
+            }
+            this.cdr.detectChanges();
+          },
+          error: (err) => {
+            this.consultandoDni = false;
+            this.limpiarDatosPersona();
+            console.error('Error al buscar DNI en API externa:', err);
+            Swal.fire('Error de API', 'No se pudo conectar con RENIEC. Puede ingresar los datos manualmente.', 'warning');
+            this.cdr.detectChanges();
+          },
+        });
+      },
+      error: () => {
+        this.consultandoDni = false;
+        Swal.fire('Error', 'No se pudo validar el DNI en el sistema', 'error');
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  limpiarDatosPersona() {
+    this.dniValidado = false;
+    this.nuevoTrabajador.nombre = '';
+    this.nuevoTrabajador.apellido_paterno = '';
+    this.nuevoTrabajador.apellido_materno = '';
+  }
+
+  validarCelular() {
+    const celular = this.nuevoTrabajador.celular.replace(/\D/g, '');
+    this.nuevoTrabajador.celular = celular;
+    this.errorCelular = !/^[9]\d{8}$/.test(celular);
+  }
+
+  validarCorreo() {
+    if (this.correoValidado) return;
+    this.errorCorreo = !this.correoValido;
+  }
+
+  get correoValido(): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.nuevoTrabajador.correo);
+  }
+
+  validarCorreoBackend() {
+    if (!this.correoValido || this.correoValidado) {
+      this.errorCorreo = true;
+      return;
+    }
+    this.validandoCorreo = true;
+    this.http
+      .post(
+        `${this.URL_API}/correo/enviar`,
+        { correo: this.nuevoTrabajador.correo, dni: this.nuevoTrabajador.numeroDocumento },
+        { responseType: 'text' },
+      )
+      .subscribe({
+        next: (res) => {
+          this.validandoCorreo = false;
+          if (res === 'CODIGO_ENVIADO') {
+            Swal.fire({
+              title: 'Validar correo',
+              input: 'text',
+              inputLabel: 'Ingrese código de 6 dígitos',
+              inputAttributes: { maxlength: '6' },
+              allowOutsideClick: false,
+              showCancelButton: true,
+            }).then((r) => {
+              if (r.isConfirmed && r.value) this.validarCodigo(r.value);
+            });
+          } else {
+            Swal.fire('Error', 'No se pudo enviar el correo', 'error');
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.validandoCorreo = false;
+          Swal.fire('Error', 'No se pudo enviar el correo', 'error');
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  validarCodigo(codigo: string) {
+    this.http
+      .post(
+        `${this.URL_API}/correo/validar`,
+        { dni: this.nuevoTrabajador.numeroDocumento, codigo },
+        { responseType: 'text' },
+      )
+      .subscribe({
+        next: (respuesta) => {
+          if (respuesta === 'CODIGO_VALIDO') {
+            this.correoValidado = true;
+            Swal.fire('Correcto', 'Correo validado', 'success');
+          } else {
+            Swal.fire({
+              title: 'Código incorrecto',
+              text: 'El código ingresado no es válido. Por favor, inténtelo nuevamente.',
+              icon: 'error',
+              input: 'text',
+              inputLabel: 'Ingrese código de 6 dígitos',
+              inputAttributes: { maxlength: '6' },
+              allowOutsideClick: false,
+              showCancelButton: true,
+              confirmButtonText: 'Reintentar',
+              cancelButtonText: 'Cancelar'
+            }).then((r) => {
+              if (r.isConfirmed && r.value) this.validarCodigo(r.value);
+            });
+          }
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          Swal.fire({
+            title: 'Error de validación',
+            text: 'No se pudo validar el código. Por favor, inténtelo nuevamente.',
+            icon: 'error',
+            input: 'text',
+            inputLabel: 'Ingrese código de 6 dígitos',
+            inputAttributes: { maxlength: '6' },
+            allowOutsideClick: false,
+            showCancelButton: true,
+            confirmButtonText: 'Reintentar',
+            cancelButtonText: 'Cancelar'
+          }).then((r) => {
+            if (r.isConfirmed && r.value) this.validarCodigo(r.value);
+          });
+        },
+      });
+  }
+
+  cargoRequiereCredenciales(): boolean {
+    const cargo = this.cargos.find((c) => c.id === this.nuevoTrabajador.id_cargo);
+    if (!cargo) return false;
+    const nombreCargo = cargo.nombre?.toLowerCase() || '';
+    // Verificar si el cargo es Administrador o Auditor directamente
+    if (nombreCargo === 'administrador' || nombreCargo === 'auditor') {
+      return true;
+    }
+    // También verificar si el rol tiene menús asignados
+    const rol = this.roles.find((r) => r.nombre?.toLowerCase() === nombreCargo);
+    return !!(rol && Array.isArray(rol.menus) && rol.menus.length > 0);
+  }
+
+  obtenerNombreDocumento(): string {
+    const doc = this.documentos.find((d) => d.id === this.nuevoTrabajador.id_documento);
+    return doc ? doc.nombre : 'DNI';
+  }
+
+  obtenerNombreCargo(): string {
+    const cargo = this.cargos.find((c) => c.id === this.nuevoTrabajador.id_cargo);
+    return cargo ? cargo.nombre : '';
+  }
+
+  obtenerUsuarioLogueado(): string {
+    try {
+      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      return user.username || '';
+    } catch {
+      return '';
+    }
+  }
+
+  datosValidos(): boolean {
+    const credencialesOk = !this.cargoRequiereCredenciales()
+      || (this.nuevoTrabajador.usuario?.trim() && this.nuevoTrabajador.contrasena?.trim());
+    return (
+      this.dniValidado &&
+      this.correoValidado &&
+      !this.errorCelular &&
+      this.nuevoTrabajador.nombre &&
+      this.nuevoTrabajador.celular &&
+      this.nuevoTrabajador.direccion?.trim() &&
+      credencialesOk
+    );
+  }
+
+  guardarTrabajador() {
+    if (!this.datosValidos()) {
+      Swal.fire('Formulario incompleto', 'Revise todos los campos', 'warning');
+      return;
+    }
+
+    const payload: any = {
+      numeroDocumento: this.nuevoTrabajador.numeroDocumento,
+      nombre: this.nuevoTrabajador.nombre,
+      apellido_paterno: this.nuevoTrabajador.apellido_paterno,
+      apellido_materno: this.nuevoTrabajador.apellido_materno,
+      celular: this.nuevoTrabajador.celular,
+      correo: this.nuevoTrabajador.correo,
+      direccion: this.nuevoTrabajador.direccion,
+      nombre_documento: this.obtenerNombreDocumento(),
+      nombre_cargo: this.obtenerNombreCargo(),
+      estado: this.nuevoTrabajador.estado,
+      usuarioLogueado: this.obtenerUsuarioLogueado(),
+    };
+
+    if (this.cargoRequiereCredenciales()) {
+      payload.usuario = this.nuevoTrabajador.usuario;
+      payload.contrasena = this.nuevoTrabajador.contrasena;
+    }
+
+    this.http.post(`${this.URL_API}/crear`, payload, { responseType: 'text' }).subscribe({
+      next: () => {
+        Swal.fire('Guardado', 'Trabajador registrado', 'success').then(() => {
+          this.router.navigate(['/sistema/trabajador']);
+        });
+      },
+      error: (err) => {
+        const msg = err.error || 'No se pudo registrar';
+        if (msg.includes('error_dni_duplicado')) {
+          Swal.fire('Error', 'El DNI ya está registrado', 'error');
+        } else if (msg.includes('error_usuario_ya_existe')) {
+          Swal.fire('Error', 'El nombre de usuario ya existe', 'error');
+        } else if (msg.includes('error_usuario_logueado')) {
+          Swal.fire('Error', 'Sesión no válida. Vuelva a iniciar sesión', 'error');
+        } else {
+          Swal.fire('Error', msg, 'error');
+        }
+      },
+    });
+  }
+
+  desbloquearCampos() {
+    this.permiteEdicionManual = true;
+    this.dniValidado = false;
+    Swal.fire({
+      title: 'Campos desbloqueados',
+      text: 'Ahora puede editar los datos manualmente. Si cambia el DNI, se volverá a validar automáticamente.',
+      icon: 'info',
+      timer: 3000,
+      showConfirmButton: false,
+    });
+  }
+
+  onCargoChange() {
+    if (!this.cargoRequiereCredenciales()) {
+      this.nuevoTrabajador.usuario = '';
+      this.nuevoTrabajador.contrasena = '';
+    }
+  }
+
+  cerrarModal() {
+    this.router.navigate(['/sistema/trabajador']);
+  }
+}

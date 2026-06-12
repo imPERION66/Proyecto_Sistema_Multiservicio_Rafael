@@ -1,0 +1,88 @@
+<div class="modal-header bg-dark text-white border-0 py-3 py-md-4">
+  <h5 class="modal-title fw-bold">
+    <i class="bi bi-pencil-square me-2 text-danger"></i> Editar Producto
+  </h5>
+  <button type="button" class="btn-close btn-close-white" (click)="cerrarModal()"></button>
+</div>
+
+<div class="modal-body p-4 p-md-5">
+  <div class="row g-3 g-md-4">
+
+    <div class="col-md-6">
+      <label class="form-label fw-bold small mb-2">Código</label>
+      <input type="text"
+        class="form-control form-control-sm bg-light"
+        [(ngModel)]="productoEditando.codigo"
+        readonly>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-bold small mb-2">Nombre <span class="text-danger">*</span></label>
+      <input type="text"
+        class="form-control form-control-sm"
+        [(ngModel)]="productoEditando.nombre"
+        (input)="validarNombre()"
+        [ngClass]="{'is-invalid': errorNombre, 'is-valid': !errorNombre && productoEditando.nombre?.trim()}">
+      <div class="text-danger small mt-2" *ngIf="errorNombre">
+        El nombre debe tener al menos 2 caracteres.
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-bold small mb-2">Marca</label>
+      <input type="text"
+        class="form-control form-control-sm"
+        [(ngModel)]="productoEditando.marca">
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-bold small mb-2">Categoría</label>
+      <input type="text"
+        class="form-control form-control-sm bg-light"
+        [(ngModel)]="productoEditando.categoria"
+        readonly>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-bold small mb-2">Stock Actual <span class="text-danger">*</span></label>
+      <input type="number" min="0"
+        class="form-control form-control-sm"
+        [(ngModel)]="productoEditando.cantidad"
+        (input)="validarCantidad()"
+        [ngClass]="{'is-invalid': errorCantidad, 'is-valid': !errorCantidad && productoEditando.cantidad !== null}">
+      <div class="text-danger small mt-2" *ngIf="errorCantidad">
+        La cantidad no puede ser negativa.
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-bold small mb-2">Precio Venta (S/) <span class="text-danger">*</span></label>
+      <input type="number" min="0.01" step="0.01"
+        class="form-control form-control-sm"
+        [(ngModel)]="productoEditando.precio_venta"
+        (input)="validarPrecioVenta()"
+        [ngClass]="{'is-invalid': errorPrecioVenta, 'is-valid': !errorPrecioVenta && productoEditando.precio_venta}">
+      <div class="text-danger small mt-2" *ngIf="errorPrecioVenta">
+        El precio de venta debe ser mayor a cero.
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label fw-bold small mb-2">Estado</label>
+      <select class="form-select form-select-sm" [(ngModel)]="productoEditando.estado">
+        <option value="Activo">Activo</option>
+        <option value="Inactivo">Inactivo</option>
+      </select>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal-footer border-0 p-4 p-md-5">
+  <button type="button" class="btn btn-outline-secondary px-4" (click)="cerrarModal()">Cancelar</button>
+  <button type="button" class="btn btn-danger px-4"
+    (click)="guardarCambios()"
+    [disabled]="!datosValidos()">
+    Actualizar Producto
+  </button>
+</div>

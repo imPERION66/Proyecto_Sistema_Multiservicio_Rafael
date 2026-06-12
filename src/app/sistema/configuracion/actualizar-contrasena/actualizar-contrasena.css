@@ -1,0 +1,26 @@
+
+.contenedor-centrado {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh; 
+    width: 100%;
+}
+
+.card {
+    width: 100%;
+    max-width: 450px; 
+    border-radius: 12px;
+    overflow: hidden; 
+}
+
+.form-control {
+    padding: 0.7rem;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border: none;
+}
