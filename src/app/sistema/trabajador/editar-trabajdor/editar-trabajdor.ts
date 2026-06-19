@@ -13,11 +13,15 @@ import Swal from 'sweetalert2';
 })
 export class EditarTrabajdor implements OnInit {
   URL_API = 'http://localhost:8080/api/trabajadores';
+  URL_ROLES = 'http://localhost:8080/api/configuracion/roles/listar';
 
   trabajadorEditando: any = {};
   trabajadorOriginal: any = {};
   cargos: any[] = [];
-
+  roles: any[] = [];
+  editarCorreo: boolean = false;
+  correoValidado: boolean = false;
+  errorCorreo: boolean = false;
   private cdr = inject(ChangeDetectorRef);
 
   constructor(
@@ -27,13 +31,13 @@ export class EditarTrabajdor implements OnInit {
 
   ngOnInit() {
     const st: any = history.state || {};
-
     if (st.trabajador) {
       this.trabajadorEditando = { ...st.trabajador };
       this.trabajadorOriginal = { ...st.trabajador };
     }
 
     this.cargarCargos();
+    this.cargarRoles();
   }
 
   cargarCargos() {
@@ -63,6 +67,18 @@ export class EditarTrabajdor implements OnInit {
     });
   }
 
+  cargarRoles() {
+    this.http.get<any[]>(this.URL_ROLES).subscribe({
+      next: (data) => {
+        this.roles = data || [];
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error(err);
+      },
+    });
+  }
+
   hayCambios(): boolean {
     const camposAComparar = [
       'nombre',
@@ -84,6 +100,38 @@ export class EditarTrabajdor implements OnInit {
     return false;
   }
 
+  onCargoChange() {
+    // No action needed
+  }
+
+  toggleEditarCorreo() {
+    this.editarCorreo = !this.editarCorreo;
+    if (!this.editarCorreo) {
+      this.trabajadorEditando.correo = this.trabajadorOriginal.correo;
+      this.correoValidado = false;
+      this.errorCorreo = false;
+    }
+  }
+
+  validarCorreo() {
+    const correo = this.trabajadorEditando.correo;
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    
+    if (!correo || correo.trim() === '') {
+      this.errorCorreo = false;
+      this.correoValidado = false;
+      return;
+    }
+    
+    if (emailRegex.test(correo)) {
+      this.errorCorreo = false;
+      this.correoValidado = true;
+    } else {
+      this.errorCorreo = true;
+      this.correoValidado = false;
+    }
+  }
+
   cerrarModal() {
     this.router.navigate(['/sistema/trabajador']);
   }
@@ -93,6 +141,13 @@ export class EditarTrabajdor implements OnInit {
       Swal.fire('Sin cambios', 'No se ha modificado ningún dato.', 'warning');
       return;
     }
+    
+    // Validar correo si se editó
+    if (this.editarCorreo && this.errorCorreo) {
+      Swal.fire('Error', 'El correo no es válido', 'error');
+      return;
+    }
+    
     const dni = this.trabajadorEditando.numeroDocumento;
     const payload = {
       nombre: this.trabajadorEditando.nombre,

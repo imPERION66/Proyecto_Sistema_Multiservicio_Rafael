@@ -1,14 +1,4 @@
 import { Component } from '@angular/core';
-<<<<<<< HEAD
-
-@Component({
-  selector: 'app-venta',
-  imports: [],
-  templateUrl: './venta.html',
-  styleUrl: './venta.css',
-})
-export class Venta {}
-=======
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
@@ -170,4 +160,3 @@ export class Venta {
     this.buscandoCliente = false;
   }
 }
->>>>>>> 1cc5d068717bf3c9a8ab273cc60b96495843c464

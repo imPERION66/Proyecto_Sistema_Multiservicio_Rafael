@@ -38,8 +38,19 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label fw-bold small mb-2">Correo</label>
-                <input type="email" class="form-control form-control-sm"
-                    [(ngModel)]="trabajadorEditando.correo" name="correo_edit">
+                <div class="input-group input-group-sm">
+                    <input type="email" class="form-control form-control-sm"
+                        [(ngModel)]="trabajadorEditando.correo"
+                        name="correo_edit"
+                        [readonly]="!editarCorreo"
+                        [ngClass]="{'is-invalid': errorCorreo, 'is-valid': correoValidado}"
+                        (input)="validarCorreo()">
+                    <button class="btn btn-outline-secondary" type="button" (click)="toggleEditarCorreo()">
+                        <i class="bi" [ngClass]="editarCorreo ? 'bi-lock' : 'bi-unlock'"></i>
+                    </button>
+                </div>
+                <div class="text-danger small mt-1" *ngIf="errorCorreo">Correo inválido</div>
+                <div class="text-success small mt-1" *ngIf="correoValidado">Correo validado</div>
             </div>
             <div class="col-md-6">
                 <label class="form-label fw-bold small mb-2">Cargo</label>
