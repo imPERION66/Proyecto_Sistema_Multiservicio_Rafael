@@ -6,6 +6,9 @@ import {
 } from '@angular/ssr/node';
 import express from 'express';
 import { join } from 'node:path';
+import http from 'node:http';
+import https from 'node:https';
+import { URL } from 'node:url';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -35,6 +38,38 @@ app.use(
     redirect: false,
   }),
 );
+
+/**
+ * Proxy all /api requests to the backend service.
+ */
+app.use('/api', (req, res) => {
+  const backendUrl = process.env['API_URL'] || 'http://localhost:8080';
+  const targetUrl = new URL(req.originalUrl, backendUrl);
+  
+  const client = backendUrl.startsWith('https') ? https : http;
+  
+  const headers = { ...req.headers };
+  headers['host'] = targetUrl.host;
+  
+  const proxyReq = client.request(
+    targetUrl.toString(),
+    {
+      method: req.method,
+      headers: headers,
+    },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode || 500, proxyRes.headers);
+      proxyRes.pipe(res);
+    }
+  );
+  
+  proxyReq.on('error', (err) => {
+    console.error('Error forwarding request to backend:', err.message);
+    res.status(502).send('Bad Gateway: Error communicating with backend service.');
+  });
+  
+  req.pipe(proxyReq);
+});
 
 /**
  * Handle all other requests by rendering the Angular application.
