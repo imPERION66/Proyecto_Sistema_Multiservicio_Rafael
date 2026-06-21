@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -17,7 +18,7 @@ export class ActualizarContrasena {
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
 
-  private URL_API = 'http://localhost:8080/api/auth';
+  private URL_API = `${API_BASE_URL}/api/auth`;
 
   contrasenaActual: string = '';
   nuevaContrasena: string = '';

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, inject, ChangeDetectorRef, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +17,7 @@ export class Rol implements OnInit {
   roles: any[] = [];
   mostrarModal = false;
 
-  private URL = 'http://localhost:8080/api/configuracion';
+  private URL = `${API_BASE_URL}/api/configuracion`;
   private platformId = inject(PLATFORM_ID);
   private cdr = inject(ChangeDetectorRef);
 

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -47,9 +48,9 @@ type ModoPanel = 'buscar' | 'lista' | 'nuevo';
 })
 export class CrearVenta implements OnInit {
 
-  private URL_VENTAS   = 'http://localhost:8080/api/ventas';
-  private URL_CLIENTES = 'http://localhost:8080/api/clientes';
-  private URL_PRODUCTOS = 'http://localhost:8080/api/productos';
+  private URL_VENTAS   = `${API_BASE_URL}/api/ventas`;
+  private URL_CLIENTES = `${API_BASE_URL}/api/clientes`;
+  private URL_PRODUCTOS = `${API_BASE_URL}/api/productos`;
 
   tipoComprobante = 'Boleta';
   serie           = 'B001';

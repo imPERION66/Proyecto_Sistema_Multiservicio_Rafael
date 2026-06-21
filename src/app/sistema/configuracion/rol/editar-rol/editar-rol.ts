@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -25,8 +26,8 @@ export class EditarRol implements OnInit {
   private platformId = inject(PLATFORM_ID);
   private cdr = inject(ChangeDetectorRef);
 
-  private URL_API = 'http://localhost:8080/api/menus';
-  private URL_MENUS = 'http://localhost:8080/api/menus/lista-menus';
+  private URL_API = `${API_BASE_URL}/api/menus`;
+  private URL_MENUS = `${API_BASE_URL}/api/menus/lista-menus`;
 
   constructor(
     private http: HttpClient,

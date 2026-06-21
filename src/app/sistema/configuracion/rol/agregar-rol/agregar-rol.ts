@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -25,8 +26,8 @@ export class AgregarRol implements OnInit {
 
   // CORRECCIÓN: La ruta debe coincidir con el @RequestMapping("/api/configuracion")
   // y el @PostMapping("/roles/crear") de tu controlador Java.
-  private URL_BASE = 'http://localhost:8080/api/configuracion';
-  private URL_MENUS = 'http://localhost:8080/api/menus/lista-menus';
+  private URL_BASE = `${API_BASE_URL}/api/configuracion`;
+  private URL_MENUS = `${API_BASE_URL}/api/menus/lista-menus`;
 
   constructor(
     private http: HttpClient,

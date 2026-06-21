@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -25,7 +26,7 @@ export class Cliente implements OnInit {
   clienteEditando: any = {};
   nuevoVehiculo: any = { placa: '', marca: '', modelo: '' };
 
-  private URL_API = 'http://localhost:8080/api/clientes';
+  private URL_API = `${API_BASE_URL}/api/clientes`;
 
   constructor(private http: HttpClient) {
     this.router.events.subscribe((ev: any) => {

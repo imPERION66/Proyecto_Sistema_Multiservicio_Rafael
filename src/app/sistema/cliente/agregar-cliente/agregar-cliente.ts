@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +16,7 @@ export class AgregarCliente {
   private http = inject(HttpClient);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
-  private URL_API = 'http://localhost:8080/api/clientes';
+  private URL_API = `${API_BASE_URL}/api/clientes`;
 
   nuevoCliente: any = { dni: '', nombre: '', apellido_paterno: '', apellido_materno: '', celular: '', correo: '', estado: 'Activo' };
   vehiculos: any[] = [];

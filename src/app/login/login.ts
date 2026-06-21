@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, NgZone, ChangeDetectorRef, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
@@ -30,7 +31,7 @@ export class Login {
     private router: Router,
     private http: HttpClient,
   ) {}
-  private URL_AUTH = 'http://localhost:8080/api/auth';
+  private URL_AUTH = `${API_BASE_URL}/api/auth`;
 
   check() {
     this.ocultarContrasena = !this.ocultarContrasena;

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -53,8 +54,8 @@ type ModoPanel = 'buscar' | 'lista' | 'nuevo';
 })
 export class CrearMantenimiento implements OnInit {
 
-  private URL         = 'http://localhost:8080/api/mantenimiento';
-  private URL_CLIENTES = 'http://localhost:8080/api/clientes';
+  private URL         = `${API_BASE_URL}/api/mantenimiento`;
+  private URL_CLIENTES = `${API_BASE_URL}/api/clientes`;
 
   // ── Cabecera ─────────────────────────────────────────────────────────────────
   fechaEmision: string = new Date().toISOString().split('T')[0];

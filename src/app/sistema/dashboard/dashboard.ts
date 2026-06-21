@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
 import { ChartjsComponent } from '@coreui/angular-chartjs';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -11,7 +12,7 @@ import { HttpClient } from '@angular/common/http';
 })
 export class Dashboard implements OnInit {
   
-  private URL_DASHBOARD = 'http://localhost:8080/api/dashboard/estadisticas';
+  private URL_DASHBOARD = `${API_BASE_URL}/api/dashboard/estadisticas`;
   private platformId = inject(PLATFORM_ID);
 
   constructor(private http: HttpClient) {}

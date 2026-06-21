@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,8 +13,8 @@ import Swal from 'sweetalert2';
   styleUrl: './editar-trabajdor.css',
 })
 export class EditarTrabajdor implements OnInit {
-  URL_API = 'http://localhost:8080/api/trabajadores';
-  URL_ROLES = 'http://localhost:8080/api/configuracion/roles/listar';
+  URL_API = `${API_BASE_URL}/api/trabajadores`;
+  URL_ROLES = `${API_BASE_URL}/api/configuracion/roles/listar`;
 
   trabajadorEditando: any = {};
   trabajadorOriginal: any = {};

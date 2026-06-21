@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,7 +24,7 @@ export class EditarCliente implements OnInit {
   errorCorreo = false;
   errorPlaca = false;
 
-  private URL_API = 'http://localhost:8080/api/clientes';
+  private URL_API = `${API_BASE_URL}/api/clientes`;
 
   constructor(
     private http: HttpClient,

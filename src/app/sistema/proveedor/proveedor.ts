@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -23,7 +24,7 @@ export class Proveedor implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
 
-  private URL_API = 'http://localhost:8080/api/proveedores';
+  private URL_API = `${API_BASE_URL}/api/proveedores`;
 
   constructor() {
     this.router.events.subscribe(() => {

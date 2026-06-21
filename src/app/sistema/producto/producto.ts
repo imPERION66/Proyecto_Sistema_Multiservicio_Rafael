@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,7 @@ export class Producto implements OnInit {
 
   private platformId = inject(PLATFORM_ID);
   private cdr = inject(ChangeDetectorRef);
-  private URL_API = 'http://localhost:8080/api/productos';
+  private URL_API = `${API_BASE_URL}/api/productos`;
 
   constructor(private http: HttpClient, public router: Router) {
     this.router.events

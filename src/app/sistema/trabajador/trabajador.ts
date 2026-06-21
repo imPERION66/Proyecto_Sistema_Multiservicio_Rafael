@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -32,7 +33,7 @@ export class Trabajador implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
 
-  private URL_API = 'http://localhost:8080/api/trabajadores';
+  private URL_API = `${API_BASE_URL}/api/trabajadores`;
 
   constructor() {
     this.router.events.subscribe((ev: any) => {
@@ -63,7 +64,7 @@ export class Trabajador implements OnInit {
   /** Cargar la lista de menús desde el backend. Endpoint esperado: /api/menus */
   cargarMenus() {
     // Ajusta la URL si tu backend expone otro endpoint para menus
-    this.http.get<any[]>('http://localhost:8080/api/menus').subscribe({
+    this.http.get<any[]>(`${API_BASE_URL}/api/menus`).subscribe({
       next: (data) => {
         this.menus = data || [];
         this.cdr.detectChanges();

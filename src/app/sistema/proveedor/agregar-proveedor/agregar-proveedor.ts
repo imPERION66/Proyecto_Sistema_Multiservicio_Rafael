@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +14,7 @@ import Swal from 'sweetalert2';
   styleUrl: './agregar-proveedor.css',
 })
 export class AgregarProveedor implements OnInit {
-  URL_API = 'http://localhost:8080/api/proveedores';
+  URL_API = `${API_BASE_URL}/api/proveedores`;
 
   esEdicion = false;
   idProveedorAEditar: string | null = null; 

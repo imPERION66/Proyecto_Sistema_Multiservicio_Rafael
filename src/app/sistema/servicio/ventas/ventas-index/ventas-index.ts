@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@config';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -29,7 +30,7 @@ interface ResumenHoy {
 })
 export class VentasIndex implements OnInit {
 
-  private URL = 'http://localhost:8080/api/ventas';
+  private URL = `${API_BASE_URL}/api/ventas`;
 
   // ── Resumen ─────────────────────────────────────────────────────────────────
   resumen: ResumenHoy = { totalVentas: 0, montoTotalHoy: 0, ticketPromedio: 0 };
