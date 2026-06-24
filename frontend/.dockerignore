@@ -3,9 +3,11 @@ node_modules
 .gitignore
 .gitattributes
 .vscode
+.editorconfig
 .prettierrc
 # dist
 README.md
+HELP.md
 Dockerfile
 .dockerignore
 npm-debug.log
