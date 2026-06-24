@@ -101,12 +101,13 @@ public class EnvLoader {
     private static void overrideWithEnv(Properties properties) {
         // Claves conocidas para asegurar que se carguen incluso si el properties está vacío
         String[] keys = {
-            "url", "user", "password",
+            "url", "password",
             "brevo.smtp.host", "brevo.smtp.port", "brevo.smtp.user", "brevo.smtp.password", "brevo.smtp.from",
             "apisperu.api.key", "apisperu.ruc.api.key"
         };
         for (String key : keys) {
             String envName = key.replace('.', '_').toUpperCase();
+            if ("USER".equals(envName)) continue; // Evitar usar la variable de entorno USER del sistema
             String envValue = System.getenv(envName);
             if (envValue != null && !envValue.isEmpty()) {
                 properties.setProperty(key, envValue);
@@ -129,7 +130,9 @@ public class EnvLoader {
         
         // Procesar cualquier otra propiedad cargada dinámicamente desde el archivo o .env
         for (String name : properties.stringPropertyNames()) {
+            if ("user".equals(name)) continue; // Evitar sobrescribir la propiedad de usuario de BD con USER del sistema
             String envName = name.replace('.', '_').toUpperCase();
+            if ("USER".equals(envName)) continue;
             String envValue = System.getenv(envName);
             if (envValue != null && !envValue.isEmpty()) {
                 properties.setProperty(name, envValue);
