@@ -15,9 +15,8 @@ const getApiBaseUrl = (): string => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return 'http://localhost:8080';
     }
-    // En producción, usamos el origen actual (el dominio de la web).
-    // Con Nginx/Dokploy, las llamadas relativas a /api se redirigirán automáticamente al backend.
-    return window.location.origin;
+    // En producción, retornamos el dominio del backend directamente.
+    return 'https://apirafael.blxkstudio.com';
   }
 
   // Fallback por defecto si no se detecta el entorno
