@@ -15,4 +15,5 @@ COPY --from=build /app/dist/Multiservicio_rafael/browser /usr/share/nginx/html
 # Copiar el archivo index.csr.html (generado por Angular SSR) como index.html
 RUN cp /usr/share/nginx/html/index.csr.html /usr/share/nginx/html/index.html || true
 EXPOSE 80
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
