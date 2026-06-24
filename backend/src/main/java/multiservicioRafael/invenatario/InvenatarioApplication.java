@@ -11,7 +11,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class InvenatarioApplication { 
 
     public static void main(String[] args) {
-        System.setProperty("java.awt.headless", "false");
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("nix") || os.contains("nux") || os.contains("aix")) {
+            System.setProperty("java.awt.headless", "true");
+        } else {
+            System.setProperty("java.awt.headless", "false");
+        }
         SpringApplication.run(InvenatarioApplication.class, args);
         abrirNavegador("http://localhost:4200");
     }
