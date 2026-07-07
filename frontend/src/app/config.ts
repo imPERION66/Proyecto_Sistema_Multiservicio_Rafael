@@ -16,8 +16,8 @@ const getApiBaseUrl = (): string => {
       return 'http://localhost:8080';
     }
     
-    // EN PRODUCCIÓN: Apunta directamente a tu nueva URL de Render
-    return 'https://backend-inventario-qy76.onrender.com';
+    // EN PRODUCCIÓN: Apunta directamente a tu nueva URL de Dokploy
+    return 'https://apirafael.blxkstudio.com';
   }
 
   // Fallback por defecto si no se detecta el entorno
