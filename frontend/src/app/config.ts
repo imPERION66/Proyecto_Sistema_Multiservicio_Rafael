@@ -15,8 +15,9 @@ const getApiBaseUrl = (): string => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return 'http://localhost:8080';
     }
-    // En producción, retornamos el dominio del backend directamente.
-    return 'https://apirafael.blxkstudio.com';
+    
+    // EN PRODUCCIÓN: Apunta directamente a tu nueva URL de Render
+    return 'https://backend-inventario-qy76.onrender.com';
   }
 
   // Fallback por defecto si no se detecta el entorno

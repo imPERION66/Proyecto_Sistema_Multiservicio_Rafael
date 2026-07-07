@@ -17,28 +17,29 @@ export class AgregarProducto implements OnInit {
   private URL_API = `${API_BASE_URL}/api/productos`;
   private URL_PROVEEDORES = `${API_BASE_URL}/api/proveedores`;
 
-  categorias: any[] = [];
+  categorias: string[] = [];
+  categoriasConMarcas: any[] = [];
   proveedores: any[] = [];
+  marcasDisponibles: string[] = [];
 
-  // Errores en tiempo real
-  errorCodigo = false;
   errorNombre = false;
   errorCantidad = false;
+  errorStockMinimo = false;
   errorPrecioCompra = false;
   errorPrecioVenta = false;
   errorPrecioVentaMenor = false;
 
   nuevoProducto: any = {
-    codigo: '',
     nombre: '',
     marca: '',
     id_categoria: 0,
+    nombre_categoria: '',
     cantidad: null,
     precio_compra: null,
     precio_venta: null,
     stock_minimo: 5,
     estado: 'Activo',
-    ruc_proveedor: ''
+    nombre_proveedor: '',
   };
 
   private cdr = inject(ChangeDetectorRef);
@@ -46,67 +47,115 @@ export class AgregarProducto implements OnInit {
   private router = inject(Router);
 
   ngOnInit() {
-    this.http.get<any[]>(`${this.URL_API}/categorias`).subscribe({
+    this.http.get<string[]>(`${this.URL_API}/categorias`).subscribe({
       next: (data) => {
-        this.categorias = data;
-        if (data.length > 0) this.nuevoProducto.id_categoria = data[0].id;
+        this.categorias = data || [];
+        if (this.categorias.length > 0) {
+          this.nuevoProducto.nombre_categoria = this.categorias[0];
+        }
+        this.actualizarMarcas();
         this.cdr.detectChanges();
       },
-      error: (err) => console.error(err)
+      error: (err) => {
+        console.error('Error al cargar categorías:', err);
+      },
+    });
+
+    this.http.get<any[]>(`${this.URL_API}/categorias-marcas`).subscribe({
+      next: (data) => {
+        console.log('Datos recibidos de categorías-marcas:', data);
+        this.categoriasConMarcas = data || [];
+        this.actualizarMarcas();
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error al cargar categorías con marcas:', err);
+      },
     });
 
     this.http.get<any>(`${this.URL_PROVEEDORES}/listar`).subscribe({
       next: (data) => {
-        const proveedoresArray = Array.isArray(data) ? data : data.content || data.data || [];
-        this.proveedores = proveedoresArray.filter((p: any) => p.estado === 'Activo');
+        const arr = Array.isArray(data) ? data : data.content || data.data || [];
+        this.proveedores = arr.filter((p: any) => p.estado === 'Activo');
         this.cdr.detectChanges();
       },
-      error: (err) => console.error('Error al cargar proveedores:', err)
+      error: (err) => {
+        console.error('Error al cargar proveedores:', err);
+      },
     });
   }
 
-  // ── Validaciones en tiempo real ──────────────────────────────────────────
-  validarCodigo() {
-    this.errorCodigo = !this.nuevoProducto.codigo?.trim() ||
-      !/^[A-Za-z0-9\-]{2,20}$/.test(this.nuevoProducto.codigo.trim());
+  onCategoriaChange() {
+    this.nuevoProducto.marca = '';
+    this.actualizarMarcas();
+  }
+
+  actualizarMarcas() {
+    console.log('Categoría seleccionada:', this.nuevoProducto.nombre_categoria);
+
+    if (!this.nuevoProducto.nombre_categoria) {
+      this.marcasDisponibles = [];
+      return;
+    }
+
+    const categoriaConMarcas = this.categoriasConMarcas.find(
+      (c: any) => c.nombre_categoria === this.nuevoProducto.nombre_categoria,
+    );
+
+    console.log('Resultado encontrado:', categoriaConMarcas);
+    this.marcasDisponibles = categoriaConMarcas?.marcas || [];
+    console.log('Marcas disponibles:', this.marcasDisponibles);
   }
 
   validarNombre() {
-    this.errorNombre = !this.nuevoProducto.nombre?.trim() ||
-      this.nuevoProducto.nombre.trim().length < 2;
+    const v = this.nuevoProducto.nombre?.trim();
+    this.errorNombre = !v || v.length < 2 || v.length > 100;
   }
 
   validarCantidad() {
-    this.errorCantidad = this.nuevoProducto.cantidad === null ||
-      this.nuevoProducto.cantidad < 0;
+    const v = Number(this.nuevoProducto.cantidad);
+    this.errorCantidad =
+      this.nuevoProducto.cantidad === null || v < 0 || v > 999 || !Number.isInteger(v);
+    this.validarStockMinimo();
+  }
+
+  validarStockMinimo() {
+    const sm = Number(this.nuevoProducto.stock_minimo);
+    const cant = Number(this.nuevoProducto.cantidad);
+    this.errorStockMinimo = sm < 0 || sm > 999 || (!isNaN(cant) && sm > cant);
   }
 
   validarPrecioCompra() {
-    this.errorPrecioCompra = this.nuevoProducto.precio_compra === null ||
-      this.nuevoProducto.precio_compra < 0;
+    const v = Number(this.nuevoProducto.precio_compra);
+    this.errorPrecioCompra = !v || v <= 0 || v > 9999.99;
     this.validarPrecioVenta();
   }
 
   validarPrecioVenta() {
-    this.errorPrecioVenta = !this.nuevoProducto.precio_venta ||
-      this.nuevoProducto.precio_venta <= 0;
+    const v = Number(this.nuevoProducto.precio_venta);
+    this.errorPrecioVenta = !v || v <= 0 || v > 9999.99;
     this.errorPrecioVentaMenor =
       !this.errorPrecioVenta &&
       this.nuevoProducto.precio_compra > 0 &&
-      Number(this.nuevoProducto.precio_venta) <= Number(this.nuevoProducto.precio_compra);
+      v <= Number(this.nuevoProducto.precio_compra);
   }
 
   datosValidos(): boolean {
-    return !this.errorCodigo && !this.errorNombre &&
-           !this.errorCantidad && !this.errorPrecioCompra &&
-           !this.errorPrecioVenta && !this.errorPrecioVentaMenor &&
-           !!this.nuevoProducto.codigo?.trim() &&
-           !!this.nuevoProducto.nombre?.trim();
+    return (
+      !this.errorNombre &&
+      !this.errorCantidad &&
+      !this.errorStockMinimo &&
+      !this.errorPrecioCompra &&
+      !this.errorPrecioVenta &&
+      !this.errorPrecioVentaMenor &&
+      !!this.nuevoProducto.nombre?.trim() &&
+      this.nuevoProducto.cantidad !== null &&
+      this.nuevoProducto.precio_compra !== null &&
+      this.nuevoProducto.precio_venta !== null
+    );
   }
 
   guardarProducto() {
-    // Dispara todas las validaciones antes de intentar guardar
-    this.validarCodigo();
     this.validarNombre();
     this.validarCantidad();
     this.validarPrecioCompra();
@@ -117,17 +166,26 @@ export class AgregarProducto implements OnInit {
       return;
     }
 
-    this.http.post(`${this.URL_API}/agregar`, this.nuevoProducto, { responseType: 'text' }).subscribe({
-      next: (res) => {
-        if (res === 'PRODUCTO_REGISTRADO') {
-          Swal.fire({ icon: 'success', title: 'Producto registrado', timer: 1800, showConfirmButton: false });
-          this.router.navigate(['/sistema/producto']);
-        } else {
-          Swal.fire('Error', res, 'error');
-        }
-      },
-      error: (err) => Swal.fire('Error', err.error || 'No se pudo registrar el producto.', 'error')
-    });
+    this.http
+      .post(`${this.URL_API}/agregar-repuesto`, this.nuevoProducto, { responseType: 'text' })
+      .subscribe({
+        next: (res) => {
+          if (res === 'REPUESTO_REGISTRADO') {
+            Swal.fire({
+              icon: 'success',
+              title: 'Producto registrado',
+              timer: 1800,
+              showConfirmButton: false,
+            });
+            this.router.navigate(['/sistema/producto']);
+          } else {
+            Swal.fire('Error', res, 'error');
+          }
+        },
+        error: (err) => {
+          Swal.fire('Error', err.error || 'No se pudo registrar el producto.', 'error');
+        },
+      });
   }
 
   cerrarModal() {

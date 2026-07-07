@@ -9,10 +9,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.Categoria;
+import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.Marca;
 import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.ModuloConexion.ClienteDao;
+import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.ModuloConexion.ConfiguracionDao;
 import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.ModuloConexion.LoginDao;
 import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.ModuloConexion.MenuDao;
 import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.ModuloConexion.ProveedorDao;
+import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.ModuloConexion.RepuestoDao;
 import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.ModuloConexion.RolDao;
 import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.ModuloConexion.TrabajadorDao;
 import multiservicioRafael.invenatario.CodigoFuente.ModuloCorreo.ServicioCorreo;
@@ -100,9 +104,6 @@ public class Sistema {
     }
 
     public boolean actualizarContrasena(String usuario, String nuevaContrasena) {
-        if (!RegistroCodigosVerificacion.getInstancia().estaValidado(usuario)) {
-            return false;
-        }
         if (nuevaContrasena == null || nuevaContrasena.isBlank()) {
             return false;
         }
@@ -183,6 +184,36 @@ public class Sistema {
         return exportador.generarExcel("Reporte de Proveedores", headers, keys, proveedores);
     }
 
+    public byte[] generarPDFBytesClientes(List<Map<String, Object>> clientes) throws Exception {
+        String[] headers = {"DNI", "Nombre", "Apellido Paterno", "Apellido Materno", "Celular", "Correo", "Estado", "Vehículos"};
+        String[] keys = {"dni", "nombre", "apellido_paterno", "apellido_materno", "celular", "correo", "estado", "vehiculos"};
+        float[] pesos = {2.5f, 3.5f, 4f, 4f, 2.5f, 3.5f, 2f, 4f};
+
+        return exportador.generarPDF("Reporte de Clientes", headers, keys, pesos, clientes);
+    }
+
+    public byte[] generarExcelBytesClientes(List<Map<String, Object>> clientes) throws Exception {
+        String[] headers = {"DNI", "NOMBRE", "APELLIDO PATERNO", "APELLIDO MATERNO", "CELULAR", "CORREO", "ESTADO", "VEHÍCULOS"};
+        String[] keys = {"dni", "nombre", "apellido_paterno", "apellido_materno", "celular", "correo", "estado", "vehiculos"};
+
+        return exportador.generarExcel("Reporte de Clientes", headers, keys, clientes);
+    }
+
+    public byte[] generarPDFBytesRepuestos(List<Map<String, Object>> repuestos) throws Exception {
+        String[] headers = {"Producto", "Marca", "Categoría", "Proveedor", "Stock", "Stock Mínimo", "Precio Venta", "Estado"};
+        String[] keys = {"nombre", "marca", "categoria", "nombre_proveedor", "stock", "stock_minimo", "precio_venta", "estado"};
+        float[] pesos = {3.5f, 3f, 3f, 3.5f, 2f, 2f, 2.5f, 2f};
+
+        return exportador.generarPDF("Reporte de Productos", headers, keys, pesos, repuestos);
+    }
+
+    public byte[] generarExcelBytesRepuestos(List<Map<String, Object>> repuestos) throws Exception {
+        String[] headers = {"PRODUCTO", "MARCA", "CATEGORÍA", "PROVEEDOR", "STOCK", "STOCK MÍNIMO", "PRECIO VENTA", "ESTADO"};
+        String[] keys = {"nombre", "marca", "categoria", "nombre_proveedor", "stock", "stock_minimo", "precio_venta", "estado"};
+
+        return exportador.generarExcel("Reporte de Productos", headers, keys, repuestos);
+    }
+
     // --- MÉTODOS DE ACCESO A DATOS (GETTERS) ---
     public List<Cliente> obtenerListaClientes() {
         return listaClientes;
@@ -223,6 +254,9 @@ public class Sistema {
     public ArrayList<Trabajador> obtenerListaTrabajadores() {
         TrabajadorDao trabajador = new TrabajadorDao();
         ArrayList<Trabajador> trabajadores = trabajador.listTrabajador();
+        for (Trabajador t : trabajadores) {
+            System.out.println(t);
+        }
         if (trabajadores != null) {
             return trabajadores;
         }
@@ -465,12 +499,136 @@ public class Sistema {
             if (cliente == null || cliente.get("dni") == null) {
                 return "error_validacion: Falta el DNI del cliente";
             }
-            return this.clienteDao.editarClienteConCarros(cliente, carros,this.usuario);
+
+            return this.clienteDao.editarClienteConCarros(cliente, carros, this.usuario);
         } catch (Exception e) {
             System.out.println("Error en editarCliente: " + e.getMessage());
             e.printStackTrace();
             return "error_backend: " + e.getMessage();
         }
+    }
+
+    public boolean verificarContrasena(String username, String contrasenaActual) {
+        LoginDao login = new LoginDao();
+        Usuario usuario = login.validando(username, contrasenaActual);
+        if (usuario == null) {
+            return false;
+        }
+        return true;
+    }
+
+    ;
+    public boolean restablecerContrasenaUsuario(String usuario) {
+        LoginDao login = new LoginDao();
+        try {
+            if (usuario == null || usuario.trim().isEmpty()) {
+                return false;
+            }
+            String resultado = login.resetearContrasena(usuario.trim());
+
+            if ("PASSWORD_RESETEADA".equals(resultado)) {
+                return true;
+            } else {
+                System.out.println("No se pudo resetear la contraseña. Motivo: " + resultado);
+                return false;
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error en la capa de Sistema al restablecer contraseña: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public List<Categoria> listarCategoria() {
+        ConfiguracionDao configuracion = new ConfiguracionDao();
+        List<Categoria> lista = configuracion.listarCategorias();
+
+        if (lista == null || lista.isEmpty()) {
+            System.out.println("No se encontraron categorías o la lista está vacía.");
+        } else {
+            System.out.println("Categorías cargadas correctamente. Total: " + lista.size());
+        }
+
+        return lista;
+    }
+
+    public String agregarCategoriaSistema(Categoria categoria) {
+
+        if (categoria == null) {
+            return "ERROR: La categoría es nula.";
+        }
+
+        if (categoria.getNombre() == null || categoria.getNombre().trim().isEmpty()) {
+            return "ERROR: El nombre de la categoría no puede estar vacío.";
+        }
+
+        if (categoria.getEstado() == null || categoria.getEstado().trim().isEmpty()) {
+            return "ERROR: El estado de la categoría no puede estar vacío.";
+        }
+        ConfiguracionDao dao = new ConfiguracionDao();
+        System.out.println(this.usuario);
+        return dao.agregarCategoriaConFuncion(this.usuario, categoria);
+    }
+
+    public String modificarEstadoCategoriaSistema(String nombreCategoria, String nuevoEstado) {
+        System.out.println(this.usuario);
+
+        if (nombreCategoria == null || nombreCategoria.trim().isEmpty()) {
+            return "ERROR: El nombre de la categoría no puede estar vacío.";
+        }
+
+        if (nuevoEstado == null || nuevoEstado.trim().isEmpty()) {
+            return "ERROR: El nuevo estado no puede estar vacío.";
+        }
+        ConfiguracionDao dao = new ConfiguracionDao();
+        return dao.modificarEstadoCategoriaConFuncion(
+                this.usuario,
+                nombreCategoria.trim(),
+                nuevoEstado.trim()
+        );
+    }
+
+    public List<Marca> obtenerMarcasConCategorias() {
+        ConfiguracionDao configuracionDao = new ConfiguracionDao();
+        return configuracionDao.listarMarcasConCategorias();
+    }
+
+    public String agregarMarcaConCategoriasSistema(String marcaNombre, String marcaEstado, List<String> categoriasNombres) {
+        ConfiguracionDao configuracionDao = new ConfiguracionDao();
+        return configuracionDao.agregarMarcaConCategorias(this.usuario, marcaNombre, marcaEstado, categoriasNombres);
+    }
+
+    public String editarMarcaConCategoriasSistema(String marcaNombre, String marcaEstadoNuevo, List<String> categoriasNombres) {
+        ConfiguracionDao configuracionDao = new ConfiguracionDao();
+        return configuracionDao.editarMarcaConCategorias(this.usuario, marcaNombre, marcaEstadoNuevo, categoriasNombres);
+    }
+
+    public List<Map<String, Object>> listarCategoriasConMarcas() {
+        ConfiguracionDao configuracionDao = new ConfiguracionDao();
+        return configuracionDao.listarCategoriasConMarcas();
+    }
+
+    public List<Map<String, Object>> listarRepuestos() {
+        RepuestoDao repuesto = new RepuestoDao();
+        return repuesto.listarRepuestos();
+    }
+
+    public String agregarRepuestoSistema(String nombre, String categoriaNombre, String marcaNombre,
+            String proveedorNombre, int cantidad, java.math.BigDecimal precioCompra,
+            java.math.BigDecimal precioVenta, int stockMinimo, String estado) {
+        RepuestoDao repuestoDao = new RepuestoDao();
+        return repuestoDao.agregarRepuesto(this.usuario, nombre, categoriaNombre, marcaNombre,
+                proveedorNombre, cantidad, precioCompra, precioVenta,
+                stockMinimo, estado);
+    }
+
+    public String editarRepuestoSistema(String nombre, String categoriaNombre, String marcaNombre,
+            String proveedorNombre, int cantidad, java.math.BigDecimal precioCompra,
+            java.math.BigDecimal precioVenta, int stockMinimo, String estado) {
+        RepuestoDao repuestoDao = new RepuestoDao();
+        return repuestoDao.editarRepuesto(this.usuario, nombre, categoriaNombre, marcaNombre,
+                proveedorNombre, cantidad, precioCompra, precioVenta,
+                stockMinimo, estado);
     }
 
 }

@@ -1,173 +1,127 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { API_BASE_URL } from '@config';
+import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import Swal from 'sweetalert2';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
+
+interface OrdenResumen {
+  idOrdenServicio:     number;
+  hora:                string;
+  cliente:             string;
+  dniCliente:          string;
+  descripcionVehiculo: string;
+  precioManoObra:      number;
+  precioTotal:         number;
+  estado:              string;
+}
+
+interface ResumenMantenimiento {
+  totalOrdenes:   number;
+  montoTotal:     number;
+  ticketPromedio: number;
+}
 
 @Component({
   selector: 'app-mantenimiento',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterOutlet],
   templateUrl: './mantenimiento.html',
-  styleUrls: ['./mantenimiento.css'],
+  styleUrl: './mantenimiento.css',
 })
-export class Mantenimiento {
-  filtroBusqueda: string = '';
-  filtroProducto: string = '';
-  mostrarModal: boolean = false;
-  metodoPago: string = 'Efectivo';
-  servicioSeleccionado: any = null;
+export class Mantenimiento implements OnInit {
+  private http       = inject(HttpClient);
+  private router     = inject(Router);
+  private platformId = inject(PLATFORM_ID);
 
-  servicios = [
-    { id: 1, nombre: 'Cambio de Aceite', descripcion: 'Incluye filtro de aceite', precio: 80.00, icono: 'bi-droplet-fill' },
-    { id: 2, nombre: 'Revisión de Frenos', descripcion: 'Inspección completa del sistema de frenos', precio: 120.00, icono: 'bi-hexagon-fill' },
-    { id: 3, nombre: 'Diagnóstico General', descripcion: 'Escáner OBD + revisión completa', precio: 60.00, icono: 'bi-cpu-fill' },
-    { id: 4, nombre: 'Alineación y Balanceo', descripcion: 'Para los 4 neumáticos', precio: 90.00, icono: 'bi-arrow-repeat' },
-    { id: 5, nombre: 'Cambio de Filtros', descripcion: 'Aire, aceite y combustible', precio: 50.00, icono: 'bi-funnel-fill' },
-    { id: 6, nombre: 'Revisión Eléctrica', descripcion: 'Sistema eléctrico y batería', precio: 70.00, icono: 'bi-lightning-fill' },
-  ];
+  private URL = `${API_BASE_URL}/api/mantenimiento`;
 
-  productos = [
-    { codigo: 'ACE-001', nombre: 'Aceite Motor 10W40', marca: 'Castrol', stock: 15, precio_venta: 35.50, cantidad: 0 },
-    { codigo: 'FIL-002', nombre: 'Filtro de Aire Premium', marca: 'Bosch', stock: 5, precio_venta: 18.00, cantidad: 0 },
-    { codigo: 'PAS-003', nombre: 'Pastillas de Freno', marca: 'Brembo', stock: 20, precio_venta: 120.00, cantidad: 0 },
-    { codigo: 'FIL-004', nombre: 'Filtro de Aceite', marca: 'Mann', stock: 30, precio_venta: 22.00, cantidad: 0 },
-  ];
+  resumen: ResumenMantenimiento = { totalOrdenes: 0, montoTotal: 0, ticketPromedio: 0 };
+  cargandoResumen = true;
+  enCrear = false;
 
-  clienteModal = {
-    dni: '',
-    nombre: '',
-    apellido_paterno: '',
-    apellido_materno: '',
-    celular: '',
-    correo: '',
-    vehiculo: ''
-  };
+  ordenes: OrdenResumen[] = [];
+  cargandoTabla = true;
+  busqueda = '';
+  paginaActual = 1;
+  porPagina = 10;
+  totalRegistros = 0;
+  totalPaginas = 0;
+  private timerBusqueda: any;
 
-  clienteEncontrado: boolean = false;
-  buscandoCliente: boolean = false;
-
-  clientesDB: any[] = [
-    { dni: '74622233', nombre: 'Jose Manuel', apellido_paterno: 'Rodriguez', apellido_materno: 'Peña', celular: '987654321', correo: 'jose@gmail.com', vehiculo: 'Toyota Corolla ABC-123' }
-  ];
-
-  get serviciosFiltrados() {
-    return this.servicios.filter(s =>
-      s.nombre.toLowerCase().includes(this.filtroBusqueda.toLowerCase())
-    );
-  }
-
-  get productosFiltrados() {
-    return this.productos.filter(p =>
-      p.nombre.toLowerCase().includes(this.filtroProducto.toLowerCase()) ||
-      p.codigo.toLowerCase().includes(this.filtroProducto.toLowerCase())
-    );
-  }
-
-  get productosSeleccionados() {
-    return this.productos.filter(p => p.cantidad > 0);
-  }
-
-  get subtotalProductos(): number {
-    return this.productosSeleccionados.reduce((acc, p) => acc + (p.precio_venta * p.cantidad), 0);
-  }
-
-  get subtotal(): number {
-    return (this.servicioSeleccionado?.precio ?? 0) + this.subtotalProductos;
-  }
-
-  get igv(): number {
-    return this.subtotal * 0.18;
-  }
-
-  get total(): number {
-    return this.subtotal + this.igv;
-  }
-
-  seleccionarServicio(servicio: any) {
-    this.servicioSeleccionado = this.servicioSeleccionado?.id === servicio.id ? null : servicio;
-  }
-
-  agregarProducto(producto: any) {
-    if (producto.cantidad < producto.stock) producto.cantidad++;
-  }
-
-  quitarProducto(producto: any) {
-    if (producto.cantidad > 0) producto.cantidad--;
-  }
-
-  toggleProducto(producto: any) {
-    producto.cantidad = producto.cantidad === 0 ? 1 : 0;
-  }
-
-  abrirModal() {
-    if (!this.servicioSeleccionado) {
-      Swal.fire('Sin servicio', 'Selecciona un servicio técnico para continuar.', 'warning');
-      return;
-    }
-    this.mostrarModal = true;
-  }
-
-  cerrarModal() {
-    this.mostrarModal = false;
-    this.resetCliente();
-  }
-
-  buscarCliente() {
-    const dni = this.clienteModal.dni;
-    if (dni.length < 8) return;
-    this.buscandoCliente = true;
-    setTimeout(() => {
-      const encontrado = this.clientesDB.find(c => c.dni === dni);
-      if (encontrado) {
-        this.clienteModal = { ...encontrado };
-        this.clienteEncontrado = true;
-      } else {
-        this.clienteEncontrado = false;
-        this.clienteModal = { ...this.clienteModal, nombre: '', apellido_paterno: '', apellido_materno: '', celular: '', correo: '', vehiculo: '' };
-      }
-      this.buscandoCliente = false;
-    }, 300);
-  }
-
-  confirmarMantenimiento() {
-    if (!this.clienteModal.dni || !this.clienteModal.nombre || !this.clienteModal.apellido_paterno) {
-      Swal.fire('Datos incompletos', 'DNI, nombre y apellido paterno son requeridos.', 'warning');
-      return;
-    }
-
-    const registro = {
-      cliente: { ...this.clienteModal },
-      servicio: this.servicioSeleccionado,
-      productos: this.productosSeleccionados.map(p => ({ codigo: p.codigo, nombre: p.nombre, cantidad: p.cantidad, precio: p.precio_venta })),
-      subtotal: this.subtotal,
-      igv: this.igv,
-      total: this.total,
-      metodo_pago: this.metodoPago
-    };
-
-    console.log('POST /mantenimiento:', registro);
-
-    Swal.fire({
-      title: '¡Mantenimiento registrado!',
-      html: `<strong>Total: S/ ${this.total.toFixed(2)}</strong><br>Servicio: ${this.servicioSeleccionado.nombre}`,
-      icon: 'success',
-      confirmButtonColor: '#ff3b30'
+  constructor() {
+    inject(Router).events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd)
+    ).subscribe((e) => {
+      this.enCrear = e.urlAfterRedirects.includes('/mantenimiento/crear');
     });
-
-    this.limpiar();
-    this.cerrarModal();
   }
 
-  limpiar() {
-    this.servicioSeleccionado = null;
-    this.productos.forEach(p => p.cantidad = 0);
-    this.resetCliente();
-    this.metodoPago = 'Efectivo';
+  ngOnInit() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.cargarResumen();
+      this.cargarOrdenes();
+    }
   }
 
-  resetCliente() {
-    this.clienteModal = { dni: '', nombre: '', apellido_paterno: '', apellido_materno: '', celular: '', correo: '', vehiculo: '' };
-    this.clienteEncontrado = false;
-    this.buscandoCliente = false;
+  cargarResumen() {
+    this.cargandoResumen = true;
+    this.http.get<ResumenMantenimiento>(`${this.URL}/resumen`).subscribe({
+      next:  (r) => { this.resumen = r; this.cargandoResumen = false; },
+      error: ()  => { this.cargandoResumen = false; }
+    });
+  }
+
+  cargarOrdenes() {
+    this.cargandoTabla = true;
+    const params = new HttpParams()
+      .set('pagina',    this.paginaActual)
+      .set('porPagina', this.porPagina)
+      .set('busqueda',  this.busqueda.trim());
+
+    this.http.get<any>(`${this.URL}/listar`, { params }).subscribe({
+      next: (res) => {
+        this.ordenes         = res.datos          || [];
+        this.totalRegistros  = res.totalRegistros || 0;
+        this.totalPaginas    = res.totalPaginas   || 0;
+        this.paginaActual    = res.paginaActual   || 1;
+        this.cargandoTabla   = false;
+      },
+      error: () => { this.cargandoTabla = false; }
+    });
+  }
+
+  onBusqueda() {
+    clearTimeout(this.timerBusqueda);
+    this.timerBusqueda = setTimeout(() => { this.paginaActual = 1; this.cargarOrdenes(); }, 400);
+  }
+
+  get paginas(): number[] {
+    const rango = 2;
+    const inicio = Math.max(1, this.paginaActual - rango);
+    const fin    = Math.min(this.totalPaginas, this.paginaActual + rango);
+    const arr: number[] = [];
+    for (let i = inicio; i <= fin; i++) arr.push(i);
+    return arr;
+  }
+
+  irPagina(p: number) {
+    if (p < 1 || p > this.totalPaginas || p === this.paginaActual) return;
+    this.paginaActual = p;
+    this.cargarOrdenes();
+  }
+
+  cambiarPorPagina() { this.paginaActual = 1; this.cargarOrdenes(); }
+
+  nuevoMantenimiento() { this.router.navigate(['/sistema/servicio/mantenimiento/crear']); }
+
+  badgeEstado(estado: string): string {
+    switch (estado?.toLowerCase()) {
+      case 'completado': return 'bg-success';
+      case 'en proceso': return 'bg-warning text-dark';
+      case 'pendiente':  return 'bg-secondary';
+      default:           return 'bg-light text-dark border';
+    }
   }
 }

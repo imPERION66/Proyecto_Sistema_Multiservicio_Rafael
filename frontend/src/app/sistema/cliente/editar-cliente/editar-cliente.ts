@@ -1,20 +1,21 @@
 import { API_BASE_URL } from '@config';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-editar-cliente',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './editar-cliente.html',
   styleUrl: './editar-cliente.css',
 })
 export class EditarCliente implements OnInit {
   clienteEditando: any = {};
-  nuevoVehiculo: any = { placa: '', marca: '', modelo: '' };
+  nuevoVehiculo: any = { placa: '', marca: '', modelo: '', anio: '' };
   mostrarModalVehiculo = false;
 
   // Variables de validación
@@ -25,11 +26,11 @@ export class EditarCliente implements OnInit {
   errorPlaca = false;
 
   private URL_API = `${API_BASE_URL}/api/clientes`;
+  private cdr = inject(ChangeDetectorRef);
 
   constructor(
     private http: HttpClient,
-    private router: Router,
-    private route: ActivatedRoute
+    private router: Router
   ) {}
 
   ngOnInit() {
@@ -66,7 +67,7 @@ export class EditarCliente implements OnInit {
 
   validarPlaca() {
     const placa = this.nuevoVehiculo.placa;
-    this.errorPlaca = !/^[A-Z]{3}-\d{4}$/.test(placa.toUpperCase());
+    this.errorPlaca = !/^[A-Z0-9]{3}-\d{3,4}$/.test(placa.toUpperCase());
   }
 
   clienteValido(): boolean {
@@ -74,15 +75,14 @@ export class EditarCliente implements OnInit {
       !this.errorNombre &&
       !this.errorApPaterno &&
       !this.errorCelular &&
-      !this.errorCorreo &&
       this.clienteEditando.nombre.trim().length >= 2 &&
       this.clienteEditando.apellido_paterno.trim() &&
-      this.clienteEditando.celular.length === 9
+      String(this.clienteEditando.celular).length === 9
     );
   }
 
   abrirModalVehiculo() {
-    this.nuevoVehiculo = { placa: '', marca: '', modelo: '' };
+    this.nuevoVehiculo = { placa: '', marca: '', modelo: '', anio: '' };
     this.errorPlaca = false;
     this.mostrarModalVehiculo = true;
   }
@@ -92,7 +92,8 @@ export class EditarCliente implements OnInit {
   }
 
   guardarVehiculo() {
-    if (!this.nuevoVehiculo.placa || !this.nuevoVehiculo.marca || !this.nuevoVehiculo.modelo) {
+    console.log('Guardando vehículo:', this.nuevoVehiculo);
+    if (!this.nuevoVehiculo.placa || !this.nuevoVehiculo.marca || !this.nuevoVehiculo.modelo || !this.nuevoVehiculo.anio) {
       Swal.fire('Error', 'Complete todos los campos del vehículo', 'error');
       return;
     }
@@ -106,12 +107,26 @@ export class EditarCliente implements OnInit {
       this.clienteEditando.vehiculos = [];
     }
 
-    this.clienteEditando.vehiculos.push({ ...this.nuevoVehiculo });
+    const placaNueva = this.nuevoVehiculo.placa.toUpperCase().trim();
+    const yaExiste = this.clienteEditando.vehiculos.some(
+      (v: any) => v.placa.toUpperCase().trim() === placaNueva
+    );
+    if (yaExiste) {
+      Swal.fire('Placa duplicada', 'Este cliente ya tiene registrado un vehículo con esa placa.', 'warning');
+      return;
+    }
+
+    // Insertar el vehículo de forma reactiva clonando el arreglo
+    this.clienteEditando.vehiculos = [...this.clienteEditando.vehiculos, { ...this.nuevoVehiculo }];
+    console.log('Vehículos después de agregar:', this.clienteEditando.vehiculos);
+    this.cdr.detectChanges();
     this.cerrarModalVehiculo();
-    Swal.fire('Agregado', 'Vehículo agregado correctamente', 'success');
+    Swal.fire('Agregado', 'Vehículo añadido correctamente', 'success');
   }
 
   eliminarVehiculo(vehiculo: any) {
+    console.log('Intentando eliminar vehículo:', vehiculo);
+    console.log('Lista actual antes de eliminar:', this.clienteEditando.vehiculos);
     Swal.fire({
       title: '¿Eliminar vehículo?',
       text: 'Esta acción no se puede deshacer',
@@ -123,34 +138,73 @@ export class EditarCliente implements OnInit {
       cancelButtonText: 'Cancelar'
     }).then((result: any) => {
       if (result.isConfirmed) {
-        this.clienteEditando.vehiculos = this.clienteEditando.vehiculos.filter(
+        // Filtrar y asignar rompiendo la referencia anterior para obligar a Angular a redibujar al instante
+        const listaFiltrada = this.clienteEditando.vehiculos.filter(
           (v: any) => v.placa !== vehiculo.placa
         );
+        this.clienteEditando.vehiculos = [...listaFiltrada];
+        console.log('Lista después de eliminar:', this.clienteEditando.vehiculos);
+        this.cdr.detectChanges();
+
         Swal.fire('Eliminado', 'Vehículo eliminado', 'success');
       }
     });
   }
 
   guardarCambios() {
+    console.log('=== INICIANDO GUARDADO DE CLIENTE ===');
+    console.log('Cliente editando:', this.clienteEditando);
+    console.log('Vehículos:', this.clienteEditando.vehiculos);
+
     if (!this.clienteValido()) {
       Swal.fire('Error', 'Complete los campos obligatorios correctamente', 'error');
       return;
     }
 
+    // Estructura del Payload mapeado idéntico a lo que Spring Boot procesa en el Map
     const payload = {
-      ...this.clienteEditando
+      cliente: {
+        dni: this.clienteEditando.dni,
+        nombre: this.clienteEditando.nombre,
+        apellido_paterno: this.clienteEditando.apellido_paterno,
+        apellido_materno: this.clienteEditando.apellido_materno || '',
+        celular: this.clienteEditando.celular,
+        correo: this.clienteEditando.correo || '',
+        estado: this.clienteEditando.estado
+      },
+      carros: this.clienteEditando.vehiculos.map((v: any) => ({
+        placa: v.placa,
+        marca: v.marca,
+        modelo: v.modelo,
+        anio: String(v.anio)
+      }))
     };
 
-    console.log('Enviando actualización de cliente al backend:', payload);
+    console.log('Payload enviado al backend:', JSON.stringify(payload, null, 2));
 
-    this.http.put(`${this.URL_API}/actualizar/${this.clienteEditando.dni}`, payload).subscribe({
-      next: () => {
-        Swal.fire('Actualizado', 'Datos del cliente actualizados con éxito', 'success');
-        this.cerrarModal();
+    // Petición HTTP PUT enviando los datos organizados en el Body
+    this.http.put<any>(`${this.URL_API}/actualizar`, payload).subscribe({
+      next: (res) => {
+        console.log('Respuesta del backend:', res);
+        if (res && res.status === 'editado') {
+          Swal.fire({
+            icon: 'success',
+            title: 'Actualizado',
+            text: 'Cliente actualizado correctamente'
+          }).then(() => {
+            this.cerrarModal();
+          });
+        } else {
+          const mensajeErr = res?.status || 'No se pudo actualizar el cliente';
+          console.error('Error en respuesta:', mensajeErr);
+          Swal.fire('Error', mensajeErr, 'error');
+        }
       },
       error: (err) => {
-        console.error('Error al actualizar cliente:', err);
-        Swal.fire('Error', 'No se pudo actualizar el cliente', 'error');
+        console.error('ERROR REAL:', err);
+        console.error('Error body:', err.error);
+        const detalleError = err.error?.status || 'No se pudo actualizar el cliente';
+        Swal.fire('Error', detalleError, 'error');
       }
     });
   }

@@ -1,4 +1,4 @@
-/* ── Dropdown servicios (por fila) ─────────────────────────────────────────── */
+/* ── Dropdown de repuestos (por fila) ──────────────────────────────────────── */
 .dropdown-producto {
   position: absolute;
   top: 100%;
@@ -9,7 +9,7 @@
   border-radius: 6px;
   max-height: 260px;
   overflow-y: auto;
-  min-width: 280px;
+  min-width: 320px;
   margin-top: 2px;
 }
 
@@ -102,7 +102,7 @@
 /* ── Inputs numéricos ──────────────────────────────────────────────────────── */
 input[type="number"] {
   -moz-appearance: textfield;
-}
+}h
 
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {

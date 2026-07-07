@@ -56,19 +56,9 @@
             </div>
 
             <div class="col-md-6">
-                <label class="form-label fw-bold small mb-2">Correo Electrónico</label>
-                <div class="input-group">
-                    <input type="email" class="form-control" [(ngModel)]="nuevoCliente.correo" 
-                           (input)="validarCorreo()" name="correo" placeholder="correo@dominio.com"
-                           [readonly]="correoValidado" [ngClass]="{'bg-light': correoValidado, 'is-invalid': errorCorreo}">
-                    <button *ngIf="!correoValidado && !validandoCorreo && !permiteEdicionManual" class="btn btn-outline-success" type="button" (click)="validarCorreoBackend()">
-                        Validar
-                    </button>
-                    <span class="input-group-text" *ngIf="validandoCorreo">
-                        <span class="spinner-border spinner-border-sm text-success"></span>
-                    </span>
-                </div>
-                <div class="text-success small mt-2" *ngIf="correoValidado">Correo validado.</div>
+                <label class="form-label fw-bold small mb-2">Correo Electrónico <span class="text-muted fw-normal">(opcional)</span></label>
+                <input type="email" class="form-control" [(ngModel)]="nuevoCliente.correo" 
+                       name="correo" placeholder="correo@dominio.com">
             </div>
 
             <div class="col-12 mt-4">
@@ -84,7 +74,7 @@
                             <div class="card-body p-3 d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="fw-bold">{{ veh.placa }}</div>
-                                    <div class="small text-muted">{{ veh.marca }} {{ veh.modelo }}</div>
+                                    <div class="small text-muted">{{ veh.marca }} {{ veh.modelo }} - {{ veh.anio }}</div>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-danger" (click)="eliminarVehiculo(veh)">
                                     <i class="bi bi-trash"></i>
@@ -103,8 +93,9 @@
 
 <div class="modal-footer border-0 p-4 p-md-5">
     <button class="btn btn-outline-secondary" (click)="cerrarModal()">Cancelar</button>
-    <button class="btn btn-danger" (click)="guardarCliente()" [disabled]="!puedeGuardar">
-        Guardar Cliente
+    <button class="btn btn-danger" (click)="guardarCliente()" [disabled]="!puedeGuardar || guardando">
+        <span *ngIf="guardando" class="spinner-border spinner-border-sm me-2"></span>
+        {{ guardando ? 'Guardando...' : 'Guardar Cliente' }}
     </button>
 </div>
 
@@ -115,14 +106,76 @@
                 <h5 class="modal-title">Agregar Vehículo</h5>
                 <button type="button" class="btn-close btn-close-white" (click)="cerrarModalVehiculo()"></button>
             </div>
-            <div class="modal-body">
-                <input class="form-control mb-2" [(ngModel)]="nuevoVehiculo.placa" placeholder="Placa">
-                <input class="form-control mb-2" [(ngModel)]="nuevoVehiculo.marca" placeholder="Marca">
-                <input class="form-control mb-2" [(ngModel)]="nuevoVehiculo.modelo" placeholder="Modelo">
+
+            <div class="modal-body p-3">
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold small">Placa <span class="text-danger">*</span></label>
+                <input class="form-control text-uppercase"
+                    [(ngModel)]="nuevoVehiculo.placa"
+                    (input)="formatearPlaca()"
+                    placeholder="Ej: ABC-123"
+                    maxlength="8"
+                    [ngClass]="{'is-invalid': errorPlaca || errorPlacaDuplicada}" />
+                <div class="invalid-feedback" *ngIf="errorPlaca">Formato inválido. Vehículos mayores: M4F-520 · Vehículos menores: AB-1234.</div>
+                <div class="invalid-feedback" *ngIf="errorPlacaDuplicada">Este cliente ya tiene un vehículo con esa placa.</div>
+            </div>
+
+            <div class="mb-3 position-relative">
+                <label class="form-label fw-semibold small">Marca <span class="text-danger">*</span></label>
+                <input type="text" class="form-control"
+                    [(ngModel)]="marcaTexto"
+                    (input)="onMarcaInput()"
+                    (focus)="mostrarSugerenciasMarca = true"
+                    (blur)="ocultarSugerenciasMarca()"
+                    placeholder="Escribe o selecciona una marca..."
+                    autocomplete="off" />
+                <div class="autocomplete-lista shadow-sm"
+                    *ngIf="mostrarSugerenciasMarca && marcasSugeridas.length > 0">
+                    <div class="autocomplete-item" *ngFor="let m of marcasSugeridas"
+                        (mousedown)="seleccionarMarca(m)">
+                        {{ m }}
+                    </div>
+                </div>
+                <div class="autocomplete-lista shadow-sm"
+                    *ngIf="mostrarSugerenciasMarca && marcaTexto.trim() && marcasSugeridas.length === 0">
+                    <div class="autocomplete-item autocomplete-item--vacio">Sin coincidencias</div>
+                </div>
+            </div>
+
+            <div class="mb-3 position-relative">
+                <label class="form-label fw-semibold small">Modelo <span class="text-danger">*</span></label>
+                <input type="text" class="form-control"
+                    [(ngModel)]="modeloTexto"
+                    (input)="onModeloInput()"
+                    (focus)="nuevoVehiculo.marca && (mostrarSugerenciasModelo = true)"
+                    (blur)="ocultarSugerenciasModelo()"
+                    [disabled]="!nuevoVehiculo.marca"
+                    [placeholder]="nuevoVehiculo.marca ? 'Escribe o selecciona un modelo...' : 'Primero elige una marca'"
+                    autocomplete="off" />
+                <div class="autocomplete-lista shadow-sm"
+                    *ngIf="mostrarSugerenciasModelo && modelosSugeridos.length > 0">
+                    <div class="autocomplete-item" *ngFor="let mod of modelosSugeridos"
+                        (mousedown)="seleccionarModelo(mod)">
+                        {{ mod }}
+                    </div>
+                </div>
+                <div class="autocomplete-lista shadow-sm"
+                    *ngIf="mostrarSugerenciasModelo && modeloTexto.trim() && modelosSugeridos.length === 0">
+                    <div class="autocomplete-item autocomplete-item--vacio">Sin coincidencias</div>
+                </div>
+            </div>
+            <div class="mb-1">
+                <label class="form-label fw-semibold small">Año <span class="text-danger">*</span></label>
+                <select class="form-select" [(ngModel)]="nuevoVehiculo.anio"
+                    [disabled]="!nuevoVehiculo.modelo">
+                    <option value="">{{ nuevoVehiculo.modelo ? '— Selecciona el año —' : '— Primero elige un modelo —' }}</option>
+                    <option *ngFor="let a of anios" [value]="a">{{ a }}</option>
+                </select>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" (click)="cerrarModalVehiculo()">Cancelar</button>
-                <button class="btn btn-danger" (click)="agregarVehiculoLista()">Agregar a lista</button>
+                <button class="btn btn-danger" (click)="agregarVehiculoLista()" [disabled]="errorPlaca || errorPlacaDuplicada">Agregar a lista</button>
             </div>
         </div>
     </div>

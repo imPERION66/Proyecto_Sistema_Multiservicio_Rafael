@@ -5,7 +5,7 @@ node_modules
 .vscode
 .editorconfig
 .prettierrc
-# dist
+dist
 README.md
 HELP.md
 Dockerfile

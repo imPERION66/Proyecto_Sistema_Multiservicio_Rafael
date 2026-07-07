@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map, startWith } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -12,41 +13,55 @@ import Swal from 'sweetalert2';
   styleUrl: './configuracion.css',
 })
 export class Configuracion {
-  showRolOverlay = false;
+  public router = inject(Router);
 
-  constructor(public router: Router) {
+  // Señal reactiva con la URL actual: arranca con this.router.url y se actualiza
+  // en cada NavigationEnd. A diferencia de una suscripción manual + asignación de
+  // booleanos, un signal se propaga al template de forma inmediata y consistente,
+  // sin depender de zone.js ni de en qué callback/tick ocurrió el cambio. Esto es
+  // lo que elimina de raíz el NG0100 y los overlays que se quedaban "atorados".
+  private url = toSignal(
     this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd)
-    ).subscribe((event) => {
-      this.showRolOverlay = event.urlAfterRedirects.includes('/sistema/configuracion/rol');
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  // Cada overlay es un valor DERIVADO de la URL, no un estado mutado a mano.
+  // Angular garantiza que estos 4 son siempre consistentes entre sí porque se
+  // recalculan todos juntos a partir de la misma lectura de this.url().
+  showRolOverlay = computed(() => this.url().includes('/sistema/configuracion/rol'));
+  showCambiarContrasenaOverlay = computed(() => this.url().includes('/sistema/configuracion/actualizar-contrasena'));
+  showCategoriasOverlay = computed(() => this.url().includes('/sistema/configuracion/categorias'));
+  showMarcasOverlay = computed(() => this.url().includes('/sistema/configuracion/marcas'));
+
+  anyOverlayOpen = computed(() =>
+    this.showRolOverlay() || this.showCambiarContrasenaOverlay()
+    || this.showCategoriasOverlay() || this.showMarcasOverlay(),
+  );
+
+  constructor() {
+    // Efecto secundario aparte (bloquear scroll del body): se ejecuta cada vez
+    // que anyOverlayOpen cambia, de forma reactiva y automática.
+    effect(() => {
+      document.body.style.overflow = this.anyOverlayOpen() ? 'hidden' : '';
     });
   }
 
   // Métodos para manejar los formularios mediante SweetAlert2 (Modales dinámicos)
-  
-  abrirRecuperarContrasena() {
-    Swal.fire({
-      title: 'Recuperar Contraseña',
-      html: `
-        <input type="text" id="user_rec" class="swal2-input" placeholder="Usuario">
-        <p class="small text-muted mt-2">Se enviará un código al número registrado.</p>
-      `,
-      confirmButtonText: 'Siguiente',
-      showCancelButton: true,
-      preConfirm: () => {
-        const user = (Swal.getPopup()?.querySelector('#user_rec') as HTMLInputElement).value;
-        if (!user) Swal.showValidationMessage('Ingresa el usuario');
-        return { user };
-      }
-    }).then((result: any) => {
-      if (result.isConfirmed) {
-        Swal.fire('Éxito', 'Código enviado correctamente', 'success');
-      }
-    });
-  }
 
   abrirRoles() {
     this.router.navigate(['/sistema/configuracion/rol']);
+  }
+
+  abrirCambiarContrasena() {
+    this.router.navigate(['/sistema/configuracion/actualizar-contrasena']);
+  }
+
+  abrirCategorias() {
+    this.router.navigate(['/sistema/configuracion/categorias']);
   }
 
   abrirCategoriasProductos() {
@@ -60,30 +75,8 @@ export class Configuracion {
     });
   }
 
-  abrirAgregarTipoDocumento() {
-    Swal.fire({
-      title: 'Tipo de Documento',
-      html: `
-        <input type="text" id="doc_name" class="swal2-input" placeholder="Nombre (DNI, RUC, etc.)">
-        <input type="number" id="doc_len" class="swal2-input" placeholder="Longitud de caracteres">
-      `,
-      confirmButtonText: 'Registrar',
-      showCancelButton: true
-    });
+  abrirMarcas() {
+    this.router.navigate(['/sistema/configuracion/marcas']);
   }
 
-  abrirEditarTipoDocumento() {
-    Swal.fire({
-      title: 'Editar Tipo de Documento',
-      html: `
-        <select id="doc_select" class="swal2-input">
-          <option value="1">DNI</option>
-          <option value="2">RUC</option>
-        </select>
-        <input type="text" id="doc_name_edit" class="swal2-input" placeholder="Nuevo Nombre">
-      `,
-      confirmButtonText: 'Guardar Cambios',
-      showCancelButton: true
-    });
-  }
 }

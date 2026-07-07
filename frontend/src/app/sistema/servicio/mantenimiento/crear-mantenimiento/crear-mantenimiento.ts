@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '@config';
-import { Component, OnInit, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, HostListener, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -54,6 +54,10 @@ type ModoPanel = 'buscar' | 'lista' | 'nuevo';
 })
 export class CrearMantenimiento implements OnInit {
 
+  private http        = inject(HttpClient);
+  private router      = inject(Router);
+  private platformId  = inject(PLATFORM_ID);
+
   private URL         = `${API_BASE_URL}/api/mantenimiento`;
   private URL_CLIENTES = `${API_BASE_URL}/api/clientes`;
 
@@ -100,12 +104,12 @@ export class CrearMantenimiento implements OnInit {
   // ── Estado UI ───────────────────────────────────────────────────────────────
   guardando = false;
 
-  constructor(private http: HttpClient, private router: Router) {}
-
   ngOnInit() {
-    this.cargarTecnicoLogueado();
-    this.cargarCatalogos();
-    this.agregarItem();
+    if (isPlatformBrowser(this.platformId)) {
+      this.cargarTecnicoLogueado();
+      this.cargarCatalogos();
+      this.agregarItem();
+    }
   }
 
   // ── Cerrar dropdowns al hacer clic fuera ────────────────────────────────────

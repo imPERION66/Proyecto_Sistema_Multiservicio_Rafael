@@ -15,13 +15,20 @@
                         <input type="text" class="form-control border-start-0" placeholder="Buscar trabajador por nombre o DNI..." [(ngModel)]="filtroBusqueda" name="filtroBusqueda" (input)="aplicarFiltros()">
                     </div>
                 </div>
-                <div class="col-12 col-md-6 col-lg-3">
+                <div class="col-12 col-md-3 col-lg-2">
                     <select class="form-select" [(ngModel)]="cargoSeleccionado" name="cargoSeleccionado" (change)="onCargoChange()">
                         <option value="">Todos los cargos</option>
                         <option *ngFor="let cargo of cargos" [value]="cargo.nombre">{{ cargo.nombre }}</option>
                     </select>
                 </div>
-                <div class="col-12 col-lg-5 text-end">
+                <div class="col-12 col-md-3 col-lg-2">
+                    <select class="form-select" [(ngModel)]="estadoSeleccionado" name="estadoSeleccionado">
+                        <option value="Activo">Activo</option>
+                        <option value="Inactivo">Inactivo</option>
+                        <option value="Todos">Todos</option>
+                    </select>
+                </div>
+                <div class="col-12 col-lg-4 text-end">
                     <div class="btn-group shadow-sm">
                         <button class="btn btn-outline-dark btn-sm" (click)="exportarExcel()"><i class="bi bi-file-earmark-excel me-1"></i> Excel</button>
                         <button class="btn btn-outline-dark btn-sm" (click)="exportarPDF()"><i class="bi bi-file-earmark-pdf me-1"></i> PDF</button>
@@ -42,6 +49,7 @@
                         <th>Apellido Materno</th>
                         <th>Cargo</th>
                         <th>Contacto</th>
+                        <th>Dirección</th>
                         <th class="text-center">Estado</th>
                         <th class="text-center">fecha registro</th>
                         <th class="text-center">Acciones</th>
@@ -60,6 +68,9 @@
                             <div class="small"><i class="bi bi-telephone me-1"></i>{{ trab.celular }}</div>
                             <div class="small text-muted"><i class="bi bi-envelope me-1"></i>{{ trab.correo }}</div>
                         </td>
+                        <td>
+                            <div class="small">{{ trab.direccion || '-' }}</div>
+                        </td>
                         <td class="text-center">
                             <span class="badge" [class.bg-success]="trab.estado === 'Activo'" [class.bg-secondary]="trab.estado !== 'Activo'">
                                 {{ trab.estado }}
@@ -72,7 +83,7 @@
                         <td class="text-center">
                             <div class="btn-group">
                                 <button class="btn btn-sm btn-outline-dark" (click)="abrirModalEdit(trab)"><i class="bi bi-pencil"></i></button>
-                                <button class="btn btn-sm btn-outline-danger" (click)="eliminarTrabajador(trab.numeroDocumento)"><i class="bi bi-trash"></i></button>
+                                <!-- <button class="btn btn-sm btn-outline-danger" (click)="eliminarTrabajador(trab.numeroDocumento)"><i class="bi bi-trash"></i></button> -->
                                 <!-- opciones de menú movidas al modal de editar/crear -->
                             </div>
                         </td>
