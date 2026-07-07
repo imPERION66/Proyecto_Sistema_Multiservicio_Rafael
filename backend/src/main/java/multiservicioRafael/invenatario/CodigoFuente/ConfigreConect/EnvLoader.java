@@ -66,6 +66,21 @@ public class EnvLoader {
             properties.setProperty("password", dbPassword);
         }
 
+        // Mapear variables estándar de Spring Boot
+        String springDbUrl = System.getenv("SPRING_DATASOURCE_URL");
+        if (springDbUrl != null && !springDbUrl.isEmpty()) {
+            properties.setProperty("url", springDbUrl);
+        }
+        String springDbUser = System.getenv("SPRING_DATASOURCE_USERNAME");
+        if (springDbUser != null && !springDbUser.isEmpty()) {
+            properties.setProperty("user", springDbUser);
+        }
+        String springDbPassword = System.getenv("SPRING_DATASOURCE_PASSWORD");
+        if (springDbPassword != null && !springDbPassword.isEmpty()) {
+            properties.setProperty("password", springDbPassword);
+        }
+
+
         // Procesar cualquier otra propiedad cargada dinámicamente desde el archivo
         for (String name : properties.stringPropertyNames()) {
             if ("user".equals(name))
