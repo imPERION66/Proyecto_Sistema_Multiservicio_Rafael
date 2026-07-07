@@ -32,9 +32,13 @@ public class ControladorLogin {
         );
 
         if (usuario == null) {
+            String dbError = multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.ModuloConexion.LoginDao.lastError;
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "LOGIN_INCORRECTO"));
+                    .body(Map.of(
+                        "error", "LOGIN_INCORRECTO",
+                        "details", dbError != null ? dbError : "No database error recorded."
+                    ));
         }
 
         return ResponseEntity.ok(usuario);

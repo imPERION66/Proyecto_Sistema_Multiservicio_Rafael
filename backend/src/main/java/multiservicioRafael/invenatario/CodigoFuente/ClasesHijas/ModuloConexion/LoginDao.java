@@ -9,6 +9,8 @@ import multiservicioRafael.invenatario.CodigoFuente.ClasesHijas.Usuario;
 
 public class LoginDao implements LoginDaoInterface {
 
+    public static String lastError = null;
+
     @Override
     public Usuario validando(String usuario_1, String password) {
         String sql = "SELECT * FROM public.fn_login(?, ?)";
@@ -40,6 +42,9 @@ public class LoginDao implements LoginDaoInterface {
             }
         } catch (Exception e) {
             System.out.println("Error en validando: " + e.getMessage());
+            java.io.StringWriter sw = new java.io.StringWriter();
+            e.printStackTrace(new java.io.PrintWriter(sw));
+            lastError = e.getClass().getName() + ": " + e.getMessage() + "\n" + sw.toString();
         }
         return null;
     }

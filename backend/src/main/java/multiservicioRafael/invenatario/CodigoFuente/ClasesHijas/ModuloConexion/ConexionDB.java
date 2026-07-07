@@ -12,20 +12,27 @@ public class ConexionDB {
     private HikariDataSource dataSource; 
 
     private ConexionDB() {
-        Properties properties = multiservicioRafael.invenatario.CodigoFuente.ConfigreConect.EnvLoader.loadProperties();
+        try {
+            Properties properties = multiservicioRafael.invenatario.CodigoFuente.ConfigreConect.EnvLoader.loadProperties();
 
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(properties.getProperty("url"));
-        config.setUsername(properties.getProperty("user"));
-        config.setPassword(properties.getProperty("password"));
-        config.setDriverClassName("org.postgresql.Driver");
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl(properties.getProperty("url"));
+            config.setUsername(properties.getProperty("user"));
+            config.setPassword(properties.getProperty("password"));
+            config.setDriverClassName("org.postgresql.Driver");
 
-        config.setMaximumPoolSize(5);        
-        config.setConnectionTimeout(15000);   
-        config.setIdleTimeout(120000);      
-        config.setConnectionTestQuery("SELECT 1"); 
+            config.setMaximumPoolSize(5);        
+            config.setConnectionTimeout(15000);   
+            config.setIdleTimeout(120000);      
+            config.setConnectionTestQuery("SELECT 1"); 
 
-        this.dataSource = new HikariDataSource(config);
+            this.dataSource = new HikariDataSource(config);
+        } catch (Exception e) {
+            java.io.StringWriter sw = new java.io.StringWriter();
+            e.printStackTrace(new java.io.PrintWriter(sw));
+            LoginDao.lastError = "ConexionDB init error: " + e.getClass().getName() + ": " + e.getMessage() + "\n" + sw.toString();
+            throw e;
+        }
     }
 
     public static synchronized ConexionDB getInstance() {
