@@ -53,7 +53,7 @@ public class ServicioCorreo {
     public boolean enviarCodigoVerificacion(String correoDestino, String codigo) {
         try {
             int minutos = RegistroCodigosVerificacion.getInstancia().getMinutosValidez();
-            String remitente = config.getProperty("brevo.smtp.from", "rodriguezpenajosemanuel62@gmail.com");
+            String remitente = config.getProperty("brevo.smtp.from", "cruzvasquezyhomar@gmail.com");
             
             System.out.println("Enviando correo a: " + correoDestino);
             System.out.println("SMTP Host: " + config.getProperty("brevo.smtp.host"));
