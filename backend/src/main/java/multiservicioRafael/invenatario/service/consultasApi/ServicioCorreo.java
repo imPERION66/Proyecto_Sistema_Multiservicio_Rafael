@@ -31,6 +31,8 @@ public class ServicioCorreo {
         smtpProps.put("mail.smtp.starttls.enable", "true");
         smtpProps.put("mail.smtp.host", config.getProperty("brevo.smtp.host", "smtp-relay.brevo.com"));
         smtpProps.put("mail.smtp.port", config.getProperty("brevo.smtp.port", "587"));
+        smtpProps.put("mail.smtp.connectiontimeout", "15000");
+        smtpProps.put("mail.smtp.timeout", "15000");
 
         this.session = Session.getInstance(smtpProps, new javax.mail.Authenticator() {
             @Override
