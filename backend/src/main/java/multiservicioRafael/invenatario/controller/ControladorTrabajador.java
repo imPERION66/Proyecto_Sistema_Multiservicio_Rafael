@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import multiservicioRafael.invenatario.facade.TrabajadorFachada;
+import multiservicioRafael.invenatario.facade.ClienteFachada;
+import multiservicioRafael.invenatario.facade.AutenticacionFachada;
 import multiservicioRafael.invenatario.repository.UsuarioLogeado;
 import multiservicioRafael.invenatario.modal.Trabajador;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 public class ControladorTrabajador {
 
     private final TrabajadorFachada trabajadorFachada = new TrabajadorFachada();
+    private final ClienteFachada clienteFachada = new ClienteFachada();
+    private final AutenticacionFachada autenticacionFachada = new AutenticacionFachada();
 
     @GetMapping("/listar")
     public ResponseEntity<List<Trabajador>> listarTrabajadores() {
@@ -129,10 +133,7 @@ public class ControladorTrabajador {
     @GetMapping("/buscar-dni/{dni}")
     public ResponseEntity<Map<String, Object>> buscarDni(@PathVariable String dni) {
 
-        // TODO: Implementar consultarDNIParseado en TrabajadorFachada
-        Map<String, Object> respuesta = new HashMap<>();
-        respuesta.put("success", false);
-        respuesta.put("message", "TODO: Implementar en TrabajadorFachada");
+        Map<String, Object> respuesta = clienteFachada.consultarDNIParseado(dni);
 
         if (Boolean.TRUE.equals(respuesta.get("success"))) {
             return ResponseEntity.ok(respuesta);
@@ -149,8 +150,7 @@ public class ControladorTrabajador {
         String dni = request.get("dni");
         String correo = request.get("correo");
 
-        // TODO: Implementar envío de código en TrabajadorFachada
-        String resultado = "TODO: Implementar en TrabajadorFachada";
+        String resultado = autenticacionFachada.enviarCodigoVerificacion(dni, correo);
 
         return ResponseEntity.ok(resultado);
     }
@@ -161,8 +161,7 @@ public class ControladorTrabajador {
         String dni = request.get("dni");
         String codigo = request.get("codigo");
 
-        // TODO: Implementar validación de código en TrabajadorFachada
-        String resultado = "TODO: Implementar en TrabajadorFachada";
+        String resultado = autenticacionFachada.validarCodigoIngresado(dni, codigo);
 
         return ResponseEntity.ok(resultado);
     }

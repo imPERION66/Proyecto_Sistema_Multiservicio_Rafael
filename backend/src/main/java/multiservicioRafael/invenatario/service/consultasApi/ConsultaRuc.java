@@ -12,7 +12,10 @@ public class ConsultaRuc {
     private String token;
     private ConsultaRuc() {
         Properties prop = multiservicioRafael.invenatario.config.EnvLoader.loadProperties();
-        this.token = prop.getProperty("apisperu.api.key");
+        this.token = prop.getProperty("apisperu.ruc.api.key");
+        if (this.token == null || this.token.isBlank()) {
+            this.token = prop.getProperty("apisperu.api.key");
+        }
     }
     public static synchronized ConsultaRuc getInstance() {
         if (instancia == null) {
