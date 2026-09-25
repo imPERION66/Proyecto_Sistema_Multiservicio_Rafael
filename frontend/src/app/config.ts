@@ -9,7 +9,7 @@ const getApiBaseUrl = (): string => {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return 'http://localhost:8080';
     }
-    return 'https://backend-inventario-qy76.onrender.com';
+    return 'https://sistemamultiservicio-rafael.onrender.com';
   }
   return 'http://localhost:8080';
 };
