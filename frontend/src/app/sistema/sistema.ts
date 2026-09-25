@@ -17,6 +17,7 @@ export class Sistema implements OnInit {
 
   private rutaNombres: { [key: string]: string } = {
     'dashboard':        'Dashboard',
+    'auditoria':        'Auditoría',
     'cliente':          'Clientes',
     'producto':         'Productos',
     'reabastecimiento': 'Reabastecimiento',
@@ -29,6 +30,7 @@ export class Sistema implements OnInit {
     'mantenimiento':    'Servicios — Mantenimiento',
     'ventas':           'Servicios — Ventas',
     'crear':            'Servicios — Nueva Venta',
+    'reporte-general':  'Servicios — Reporte General',
     'rol':              'Configuración — Roles',
     'agregar-rol':      'Configuración — Agregar Rol',
     'editar-rol':       'Configuración — Editar Rol',
@@ -79,6 +81,34 @@ export class Sistema implements OnInit {
 
   getNombreRuta(): string {
     return this.nombreRutaActual;
+  }
+
+  getNombreUsuario(): string {
+    if (!this.usuarioActual) return 'Usuario';
+    const nombre = this.usuarioActual.nombre;
+    const apellido = this.usuarioActual.apellido_paterno || '';
+    if (nombre) {
+      return `${nombre} ${apellido}`.trim();
+    }
+    return this.usuarioActual.rol || this.usuarioActual.username || 'Usuario';
+  }
+
+  getRolUsuario(): string {
+    if (!this.usuarioActual) return 'Rol no definido';
+    return this.usuarioActual.rol || 'Usuario';
+  }
+
+  getInicialUsuario(): string {
+    if (!this.usuarioActual) return 'U';
+    const nombre = this.usuarioActual.nombre;
+    if (nombre && nombre.length > 0) {
+      return nombre.charAt(0).toUpperCase();
+    }
+    const username = this.usuarioActual.username;
+    if (username && username.length > 0) {
+      return username.charAt(0).toUpperCase();
+    }
+    return 'U';
   }
 
   cerrarSesion() {

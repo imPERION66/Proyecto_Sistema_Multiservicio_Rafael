@@ -1,19 +1,38 @@
-# Etapa 1: Construcción de la aplicación Angular
+# =========================================================================
+# STAGE 1: Build the application
+# =========================================================================
 FROM node:20-alpine AS build
+
 WORKDIR /app
+
+# Copy package files
 COPY package*.json ./
+
+# Install all dependencies (including devDependencies required for building)
 RUN npm ci
+
+# Copy the source code
 COPY . .
+
+# Build the Angular SSR application
 RUN npm run build
 
-# Etapa 2: Servidor Nginx para servir los archivos estáticos
-FROM nginx:alpine
-# Eliminar la página de bienvenida por defecto de Nginx
-RUN rm -rf /usr/share/nginx/html/*
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist/Multiservicio_rafael/browser /usr/share/nginx/html
-# Copiar el archivo index.csr.html (generado por Angular SSR) como index.html
-RUN cp /usr/share/nginx/html/index.csr.html /usr/share/nginx/html/index.html || true
-EXPOSE 80
-EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
+# =========================================================================
+# STAGE 2: Serve the application using a lightweight runtime
+# =========================================================================
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Set production environment variables
+ENV NODE_ENV=production
+ENV PORT=4000
+
+# Copy built assets from build stage
+COPY --from=build /app/dist /app/dist
+
+# Expose the SSR server port
+EXPOSE 4000
+
+# Run the Express SSR server
+CMD ["node", "dist/Multiservicio_rafael/server/server.mjs"]

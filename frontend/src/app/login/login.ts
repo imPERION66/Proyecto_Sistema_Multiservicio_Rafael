@@ -209,14 +209,8 @@ export class Login {
           this.router.navigate(['/sistema']);
         }
       },
-      error: (err: any) => {
-        console.error('Error de login:', err);
-        const details = err?.error?.details ? `<br><br><small style="color:red; text-align:left; display:block; max-height:150px; overflow-y:auto;"><b>Detalle técnico:</b><br>${err.error.details}</small>` : '';
-        Swal.fire({
-          title: 'Error',
-          html: 'Usuario o contraseña incorrectos.' + details,
-          icon: 'error'
-        });
+      error: () => {
+        Swal.fire('Error', 'Usuario o contraseña incorrectos', 'error');
       },
     });
   }

@@ -117,7 +117,6 @@ export class Cliente implements OnInit {
   cargarClientes() {
     this.http.get<any[]>(`${this.URL_API}/listar`).subscribe({
       next: (data) => {
-        // Se mapea la respuesta y se aplica .reverse() para mostrar el último cliente agregado primero (orden descendente)
         this.clientes = (data || []).map((row: any) => ({
           dni: row.dni,
           nombre: row.nombre,
@@ -127,7 +126,7 @@ export class Cliente implements OnInit {
           correo: row.correo,
           estado: row.estado,
           vehiculos: row.carros || [],
-        })).reverse(); // <-- ORDENAMIENTO DESCENDENTE A NIVEL DE CÓDIGO
+        }));
         this.cdr.detectChanges();
       },
       error: (err) => { console.error('Error al cargar clientes:', err); },

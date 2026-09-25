@@ -38,7 +38,7 @@ interface Cliente {
   correo:           string;
 }
 
-type ModoPanel = 'buscar' | 'lista' | 'nuevo';
+type ModoPanel = 'lista' | 'nuevo';
 
 @Component({
   selector: 'app-crear-venta',
@@ -56,15 +56,34 @@ export class CrearVenta implements OnInit {
   private URL_VENTAS   = `${API_BASE_URL}/api/ventas`;
   private URL_CLIENTES = `${API_BASE_URL}/api/clientes`;
   private URL_PRODUCTOS = `${API_BASE_URL}/api/productos`;
+  private URL_CAJA      = `${API_BASE_URL}/api/caja`;
 
   tipoComprobante = 'Boleta';
   serie           = 'B001';
   estado          = 'Pagado';
   metodoPago      = 'Efectivo';
-  fechaEmision: string = new Date().toISOString().split('T')[0];
+  fechaEmision: string = this.getFechaActualLocal();
+
+  private getFechaActualLocal(): string {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private get fechaEmisionCompleta(): string {
+    const ahora = new Date();
+    const hh = String(ahora.getHours()).padStart(2, '0');
+    const mm = String(ahora.getMinutes()).padStart(2, '0');
+    const ss = String(ahora.getSeconds()).padStart(2, '0');
+    return `${this.fechaEmision} ${hh}:${mm}:${ss}`;
+  }
   vendedor = { nombre: '', cargo: '', codigo: '' };
   nota     = '';
   guardando = false;
+  cajaAbierta = false;
+  cargandoCaja = false;
 
   readonly metodosPago = ['Efectivo', 'Tarjeta', 'Transferencia', 'Yape', 'Plin'];
 
@@ -74,11 +93,7 @@ export class CrearVenta implements OnInit {
   };
   cliente: Cliente = { ...this.clienteVarios };
   mostrarPanelCliente = false;
-  modoPanel: ModoPanel = 'buscar';
-  dniBusqueda = '';
-  buscandoCliente = false;
-  clienteEncontrado = false;
-  clienteEditableNombres = false;
+  modoPanel: ModoPanel = 'lista';
   listaClientes: any[] = [];
   listaClientesFiltrada: any[] = [];
   cargandoLista = false;
@@ -93,8 +108,6 @@ export class CrearVenta implements OnInit {
   nuevoClienteDniValidado = false;
   nuevoClientePermiteEditar = false;
   consultandoDniNuevo = false;
-  nuevoClienteCorreoValidado = false;
-  validandoCorreoNuevo = false;
 
   items: ItemDetalle[] = [];
   repuestos: Repuesto[] = [];
@@ -106,16 +119,34 @@ export class CrearVenta implements OnInit {
     if (isPlatformBrowser(this.platformId)) {
       this.cargarVendedor();
       this.cargarRepuestos();
+      this.cargarEstadoCaja();
       this.agregarItem();
     }
+  }
+
+  cargarEstadoCaja() {
+    this.cargandoCaja = true;
+    this.http.get<any>(`${this.URL_CAJA}/estado`).subscribe({
+      next: (res) => {
+        this.cajaAbierta = !!res?.abierta;
+        this.cargandoCaja = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.cajaAbierta = false;
+        this.cargandoCaja = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   cargarVendedor() {
     try {
       const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      const nombreCompleto = `${user.nombre || ''} ${user.apellido_paterno || ''}`.trim();
       this.vendedor = {
-        nombre: user.trabajadorCompleto || user.username || 'Sin nombre',
-        cargo:  user.rolNombre || '',
+        nombre: nombreCompleto || 'Sin nombre',
+        cargo:  user.rol || '',
         codigo: user.username || '',
       };
     } catch { this.vendedor = { nombre: 'Sin nombre', cargo: '', codigo: '' }; }
@@ -123,31 +154,45 @@ export class CrearVenta implements OnInit {
 
   onTipoChange() { this.serie = this.tipoComprobante === 'Boleta' ? 'B001' : 'F001'; }
 
+  onEstadoChange() {
+    if (this.estado === 'Pendiente') {
+      this.metodoPago = '';
+    } else {
+      this.metodoPago = 'Efectivo';
+    }
+  }
+
   volver() { this.router.navigate(['/sistema/servicio/ventas']); }
 
-  abrirPanelCliente(modo: ModoPanel = 'buscar') {
+  abrirPanelCliente(modo: ModoPanel = 'lista') {
     this.modoPanel = modo;
     this.mostrarPanelCliente = true;
-    this.dniBusqueda = this.cliente.dni === '00000000' ? '' : this.cliente.dni;
-    this.clienteEncontrado = false;
-    this.clienteEditableNombres = false;
     if (modo === 'lista') this.cargarListaClientes();
   }
 
   cerrarPanelCliente() {
     this.mostrarPanelCliente = false;
-    this.dniBusqueda = '';
-    this.clienteEncontrado = false;
-    this.clienteEditableNombres = false;
-    this.buscandoCliente = false;
     this.filtroBusquedaLista = '';
     this.nuevoCliente = this.clienteVacioFactory();
     this.resetErroresNuevoCliente();
     this.nuevoClienteDniValidado = false;
     this.nuevoClientePermiteEditar = false;
     this.consultandoDniNuevo = false;
-    this.nuevoClienteCorreoValidado = false;
-    this.validandoCorreoNuevo = false;
+  }
+
+    irACrearNuevoDesdeLista() {
+    const posibleDni = this.filtroBusquedaLista.replace(/\D/g, '');
+    this.modoPanel = 'nuevo';
+    this.nuevoCliente = this.clienteVacioFactory();
+    this.resetErroresNuevoCliente();
+    this.nuevoClienteDniValidado = false;
+    this.nuevoClientePermiteEditar = false;
+    this.consultandoDniNuevo = false;
+
+    if (/^\d{8}$/.test(posibleDni)) {
+      this.nuevoCliente.dni = posibleDni;
+      this.buscarDniNuevo();
+    }
   }
 
   cambiarModo(modo: ModoPanel) {
@@ -155,120 +200,20 @@ export class CrearVenta implements OnInit {
     if (modo === 'lista') this.cargarListaClientes();
     if (modo === 'nuevo') {
       this.nuevoCliente = this.clienteVacioFactory();
-      if (this.dniBusqueda.length === 8) this.nuevoCliente.dni = this.dniBusqueda;
       this.resetErroresNuevoCliente();
       this.nuevoClienteDniValidado = false;
       this.nuevoClientePermiteEditar = false;
       this.consultandoDniNuevo = false;
-      this.nuevoClienteCorreoValidado = false;
-      this.validandoCorreoNuevo = false;
     }
   }
-
-  buscarClientePorDni() {
-    const dni = this.dniBusqueda.replace(/\D/g, '');
-    this.dniBusqueda = dni;
-    if (dni.length < 8) { 
-      this.clienteEncontrado = false; 
-      this.clienteEditableNombres = false;
-      this.buscandoCliente = false;
-      return; 
-    }
-    this.buscandoCliente = true;
-    
-    // First check if client exists in DB (using listaClientes if already loaded)
-    const clienteEnDB = this.listaClientes.find(c => c.dni === dni);
-    if (clienteEnDB) {
-      this.buscandoCliente = false;
-      this.clienteEncontrado = true;
-      this.clienteEditableNombres = false;
-      this.cliente = { 
-        id_cliente: clienteEnDB.id_cliente, 
-        dni: clienteEnDB.dni, 
-        nombre: clienteEnDB.nombre,
-        apellido_paterno: clienteEnDB.apellido_paterno, 
-        apellido_materno: clienteEnDB.apellido_materno,
-        celular: clienteEnDB.celular, 
-        correo: clienteEnDB.correo 
-      };
-      this.cdr.detectChanges();
-      return;
-    }
-
-    // If not in DB, try RENIEC lookup
-    this.http.get<any>(`${this.URL_CLIENTES}/buscar-dni/${dni}`).subscribe({
-      next: (data) => {
-        this.buscandoCliente = false;
-        if (data?.success) {
-          this.clienteEncontrado = false; // Not in DB, but we have RENIEC data
-          this.clienteEditableNombres = false;
-          this.cliente = { 
-            dni, 
-            nombre: data.nombres || '', 
-            apellido_paterno: data.apellidoPaterno || '', 
-            apellido_materno: data.apellidoMaterno || '', 
-            celular: '', 
-            correo: '' 
-          };
-        } else { 
-          // RENIEC not found, allow manual entry
-          this.clienteEncontrado = false;
-          this.clienteEditableNombres = true;
-          this.cliente = { dni, nombre: '', apellido_paterno: '', apellido_materno: '', celular: '', correo: '' };
-          Swal.fire('Atención', 'No encontrado en RENIEC. Puede ingresar los datos manualmente.', 'info'); 
-        }
-        this.cdr.detectChanges();
-      },
-      error: (err) => { 
-        this.buscandoCliente = false; 
-        if (err.status === 409) {
-          // Client exists in DB, let's load listaClientes to find it!
-          this.cargarListaClientes();
-          this.clienteEditableNombres = false;
-        } else {
-          // RENIEC API down, allow manual entry
-          this.clienteEncontrado = false;
-          this.clienteEditableNombres = true;
-          this.cliente = { dni, nombre: '', apellido_paterno: '', apellido_materno: '', celular: '', correo: '' };
-          Swal.fire('Error de API', 'No se pudo conectar con RENIEC. Puede ingresar los datos manualmente.', 'warning');
-        }
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  confirmarCliente() {
-    if (!this.cliente.nombre.trim()) { Swal.fire('Datos incompletos', 'El nombre del cliente es requerido.', 'warning'); return; }
-    this.cerrarPanelCliente();
-  }
-
-  usarClienteVarios() { this.cliente = { ...this.clienteVarios }; this.cerrarPanelCliente(); }
 
   cargarListaClientes() {
     this.cargandoLista = true;
     this.http.get<any[]>(`${this.URL_CLIENTES}/listar`).subscribe({
       next: (data) => { 
-        this.listaClientes = data || []; 
+        this.listaClientes = (data || []).filter((c: any) => c.estado === 'Activo'); 
         this.aplicarFiltroLista(); 
         this.cargandoLista = false; 
-        // Check if we were searching for a DNI that exists in the DB
-        if (this.dniBusqueda.length === 8 && !this.clienteEncontrado) {
-          const clienteEnDB = this.listaClientes.find(c => c.dni === this.dniBusqueda);
-          if (clienteEnDB) {
-            this.clienteEncontrado = true;
-            this.clienteEditableNombres = false;
-            this.cliente = { 
-              id_cliente: clienteEnDB.id_cliente, 
-              dni: clienteEnDB.dni, 
-              nombre: clienteEnDB.nombre,
-              apellido_paterno: clienteEnDB.apellido_paterno, 
-              apellido_materno: clienteEnDB.apellido_materno,
-              celular: clienteEnDB.celular, 
-              correo: clienteEnDB.correo 
-            };
-            this.cdr.detectChanges();
-          }
-        }
       },
       error: () => { this.cargandoLista = false; },
     });
@@ -353,86 +298,12 @@ export class CrearVenta implements OnInit {
     });
   }
 
-  get esCorreoValidoNuevo(): boolean { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.nuevoCliente.correo); }
-
-  validarCorreoBackendNuevo() {
-    // If in manual edit mode, no code required
-    if (this.nuevoClientePermiteEditar) {
-      this.nuevoClienteCorreoValidado = true;
-      return;
-    }
-    
-    if (!this.esCorreoValidoNuevo) return;
-    this.validandoCorreoNuevo = true;
-    this.http.post(`${this.URL_CLIENTES}/correo/enviar`, { correo: this.nuevoCliente.correo, dni: this.nuevoCliente.dni }, { responseType: 'text' }).subscribe({
-      next: () => { 
-        this.validandoCorreoNuevo = false; 
-        this.cdr.detectChanges();
-        this.mostrarPromptCodigoNuevo(); 
-      },
-      error: () => { 
-        this.validandoCorreoNuevo = false; 
-        this.cdr.detectChanges();
-        Swal.fire('Error', 'No se pudo enviar código', 'error'); 
-      }
-    });
-  }
-
-  private mostrarPromptCodigoNuevo() {
-    Swal.fire({
-      title: 'Validar Correo',
-      input: 'text',
-      inputAttributes: { maxlength: '6' },
-      showCancelButton: true,
-      confirmButtonText: 'Validar',
-      inputValidator: (value) => {
-        if (!value || value.length !== 6) {
-          return 'El código debe tener 6 dígitos';
-        }
-        return null;
-      }
-    }).then((r) => {
-      if (r.isConfirmed && r.value) this.verificarCodigoNuevo(r.value);
-    });
-  }
-
-  private verificarCodigoNuevo(codigo: string) {
-    this.http.post(`${this.URL_CLIENTES}/correo/validar`, { dni: this.nuevoCliente.dni, codigo }, { responseType: 'text' }).subscribe({
-      next: (res) => {
-        if (res === 'CODIGO_VALIDO') {
-          this.nuevoClienteCorreoValidado = true;
-          Swal.fire('Correcto', 'Correo verificado', 'success');
-        } else {
-          Swal.fire({
-            title: 'Código incorrecto',
-            text: 'El código ingresado no es válido. Por favor, intenta nuevamente.',
-            icon: 'error',
-            confirmButtonText: 'Reintentar'
-          }).then(() => {
-            this.mostrarPromptCodigoNuevo();
-          });
-        }
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        Swal.fire({
-          title: 'Error',
-          text: 'Hubo un error al validar el código. Por favor, intenta nuevamente.',
-          icon: 'error',
-          confirmButtonText: 'Reintentar'
-        }).then(() => {
-          this.mostrarPromptCodigoNuevo();
-        });
-      }
-    });
-  }
-
   validarNombreNuevo()    { this.errorNombreNuevo    = !this.nuevoCliente.nombre.trim() || this.nuevoCliente.nombre.trim().length < 2; }
   validarApPaternoNuevo() { this.errorApPaternoNuevo = !this.nuevoCliente.apellido_paterno.trim(); }
   validarCelularNuevo()   { this.errorCelularNuevo   = !/^9\d{8}$/.test(this.nuevoCliente.celular.trim()); }
   validarCorreoNuevo()    { this.errorCorreoNuevo    = !!this.nuevoCliente.correo.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.nuevoCliente.correo.trim()); }
 
-  get puedeGuardarNuevoCliente(): boolean {
+  get nuevoClienteValido(): boolean {
     if (this.nuevoClientePermiteEditar) {
       return !!(
         this.nuevoCliente.dni?.trim() &&
@@ -443,17 +314,13 @@ export class CrearVenta implements OnInit {
         !this.errorCorreoNuevo
       );
     }
-    return this.nuevoClienteDniValidado && this.nuevoClienteCorreoValidado;
-  }
-
-  nuevoClienteValido(): boolean {
-    return this.puedeGuardarNuevoCliente;
+    return this.nuevoClienteDniValidado;
   }
 
   guardarNuevoCliente() {
     this.validarDniNuevo(); this.validarNombreNuevo(); this.validarApPaternoNuevo();
     this.validarCelularNuevo(); this.validarCorreoNuevo();
-    if (!this.puedeGuardarNuevoCliente) { Swal.fire('Datos incompletos', 'Corrige los campos marcados.', 'warning'); return; }
+    if (!this.nuevoClienteValido) { Swal.fire('Datos incompletos', 'Corrige los campos marcados.', 'warning'); return; }
     this.guardandoCliente = true;
     const payload = {
       cliente: {
@@ -466,7 +333,7 @@ export class CrearVenta implements OnInit {
         estado: 'Activo',
         usuario_logueado: this.obtenerUsuarioLogueado()
       },
-      vehiculos: []
+      carros: []
     };
     this.http.post(`${this.URL_CLIENTES}/registrar`, payload, { responseType: 'text' }).subscribe({
       next: (res) => {
@@ -497,7 +364,7 @@ export class CrearVenta implements OnInit {
     this.cargandoRepuestos = true;
     this.http.get<any[]>(`${this.URL_PRODUCTOS}/listar-repuestos`).subscribe({ // Changed to /listar-repuestos!
       next: (data) => {
-        this.repuestos = (data || []).map(p => ({
+        this.repuestos = (data || []).filter(p => p.estado === 'Activo').map(p => ({
           id_repuesto: 0,
           codigo: p.nombre_repuesto || '',
           nombre: p.nombre_repuesto || '',
@@ -550,11 +417,30 @@ export class CrearVenta implements OnInit {
   }
 
   agregarItem() {
+    if (this.items.length > 0) {
+      const ultimoItem = this.items[this.items.length - 1];
+      if (!ultimoItem.repuesto || !ultimoItem.repuesto.nombre) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Producto anterior incompleto',
+          text: 'Debe seleccionar un producto en la fila actual antes de agregar uno nuevo.',
+          confirmButtonColor: '#dc3545'
+        });
+        return;
+      }
+    }
     this.items.push({ repuesto: this.repuestoVacioFactory(), descripcion: '', cantidad: 1,
       precio_unit: 0, descuento: 0, busqueda: '', resultados: [], mostrarDropdown: false });
   }
 
   eliminarItem(idx: number) { this.items.splice(idx, 1); }
+
+  validarCantidadItem(item: ItemDetalle) {
+    if (item.cantidad > (item.repuesto.stock || 0) && item.repuesto.stock > 0) {
+      Swal.fire('Stock insuficiente', `Solo hay ${item.repuesto.stock} unidades disponible(s).`, 'warning');
+      item.cantidad = 0;
+    }
+  }
 
   importeItem(item: ItemDetalle): number {
     const bruto = item.cantidad * item.precio_unit;
@@ -563,11 +449,111 @@ export class CrearVenta implements OnInit {
 
   get subtotal(): number { return this.items.reduce((s, it) => s + this.importeItem(it), 0); }
   get descuentoMonto(): number { return this.descuentoTipo === '%' ? this.subtotal * this.descuentoGlobal / 100 : this.descuentoGlobal; }
-  get igv(): number { return (this.subtotal - this.descuentoMonto) * 0.18; }
-  get total(): number { return this.subtotal - this.descuentoMonto + this.igv; }
+
+  // El precio de cada producto YA INCLUYE el IGV (así se maneja en Perú: el precio
+  // de venta al público es el precio final). Por eso el IGV no se suma al total,
+  // se EXTRAE del precio para mostrarlo desglosado en el comprobante.
+  // Precio con IGV incluido = Valor de venta × 1.18  →  IGV = Precio - (Precio / 1.18)
+  get precioConDescuento(): number { return this.subtotal - this.descuentoMonto; }
+  get valorVenta(): number { return this.precioConDescuento / 1.18; }
+  get igv(): number { return this.precioConDescuento - this.valorVenta; }
+  get total(): number { return this.precioConDescuento; }
 
   itemsValidos(): boolean {
-    return this.items.length > 0 && this.items.every(it => !!it.repuesto.nombre && it.cantidad > 0);
+    return this.items.length > 0 && this.items.every(it =>
+      !!it.repuesto.nombre && it.cantidad > 0 && it.cantidad <= (it.repuesto.stock || 0));
+  }
+
+  showModalVoucher = false;
+  voucherDatos: any = null;
+  descargandoPDF = false;
+
+  cerrarVoucher() {
+    this.showModalVoucher = false;
+    this.volver();
+  }
+
+  descargarVoucherPDF() {
+    const id = this.voucherDatos?.id_orden_venta || this.voucherDatos?.nOrden;
+    if (!id) {
+      this.imprimirVoucherHTML();
+      return;
+    }
+
+    this.descargandoPDF = true;
+    this.http.get(`${this.URL_VENTAS}/${id}/comprobante`, { responseType: 'blob' }).subscribe({
+      next: (blob: Blob) => {
+        this.descargandoPDF = false;
+        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+        const url = window.URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Comprobante_Venta_${id}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.descargandoPDF = false;
+        console.warn('Backend PDF error, usando impresión estándar HTML:', err);
+        this.imprimirVoucherHTML();
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  imprimirVoucherHTML() {
+    const printContent = document.getElementById('voucher-imprimir')?.innerHTML;
+    if (!printContent) return;
+
+    let iframe = document.getElementById('print-iframe-voucher') as HTMLIFrameElement;
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = 'print-iframe-voucher';
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+    }
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (doc) {
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Voucher_Venta_${this.voucherDatos?.nOrden || 'Pago'}</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+              body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #222; padding: 20px; }
+              .voucher-box { border: 2px solid #dc3545; border-radius: 12px; padding: 30px; background: #fff; max-width: 750px; margin: auto; }
+              .badge-tipo { background: #dc3545; color: #fff; font-size: 14px; padding: 4px 12px; border-radius: 20px; }
+              .total-highlight { font-size: 24px; font-weight: bold; color: #dc3545; }
+              @media print {
+                body { padding: 0; }
+                .voucher-box { border: none; padding: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="voucher-box">
+              ${printContent}
+            </div>
+          </body>
+        </html>
+      `);
+      doc.close();
+      setTimeout(() => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      }, 500);
+    }
   }
 
   confirmarVenta() {
@@ -581,7 +567,7 @@ export class CrearVenta implements OnInit {
       serie: this.serie,
       estado: this.estado,
       metodo_pago: this.metodoPago,
-      fecha_emision: this.fechaEmision,
+      fecha_emision: this.fechaEmisionCompleta,
       descuento_global: this.descuentoGlobal,
       descuento_tipo: this.descuentoTipo,
       nota: this.nota,
@@ -600,12 +586,32 @@ export class CrearVenta implements OnInit {
     this.http.post<any>(`${this.URL_VENTAS}/registrar`, payload).subscribe({
       next: (res) => {
         this.guardando = false;
-        Swal.fire({ 
-          title: '¡Venta registrada!',
-          html: `<b>Total: S/ ${this.total.toFixed(2)}</b><br>Cliente: ${this.nombreCompletoCliente}`,
-          icon: 'success', 
-          confirmButtonColor: '#dc3545' 
-        }).then(() => this.volver());
+        const idOrden = res.id_orden_venta || res.n_orden || Math.floor(1000 + Math.random() * 9000);
+        this.voucherDatos = {
+          id_orden_venta: idOrden,
+          nOrden: idOrden,
+          tipoComprobante: this.tipoComprobante,
+          serie: this.serie,
+          fecha: new Date().toLocaleDateString('es-PE'),
+          hora: new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          clienteNombre: this.nombreCompletoCliente,
+          clienteDni: this.cliente.dni,
+          clienteCelular: this.cliente.celular,
+          metodoPago: this.metodoPago,
+          items: this.items.map(it => ({
+            nombre: it.repuesto.nombre,
+            cantidad: it.cantidad,
+            precio_unit: it.precio_unit,
+            importe: this.importeItem(it)
+          })),
+          subtotal: this.subtotal,
+          descuentoMonto: this.descuentoMonto,
+          valorVenta: this.valorVenta,
+          igv: this.igv,
+          total: this.total
+        };
+        this.showModalVoucher = true;
+        this.cdr.detectChanges();
       },
       error: (err) => { 
         this.guardando = false; 
@@ -618,7 +624,7 @@ export class CrearVenta implements OnInit {
   limpiar() {
     this.cliente = { ...this.clienteVarios }; this.items = []; this.descuentoGlobal = 0;
     this.descuentoTipo = '%'; this.nota = ''; this.metodoPago = 'Efectivo';
-    this.fechaEmision = new Date().toISOString().split('T')[0];
+    this.fechaEmision = this.getFechaActualLocal();
     this.tipoComprobante = 'Boleta'; this.serie = 'B001';
     this.agregarItem();
   }

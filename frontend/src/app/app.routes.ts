@@ -11,11 +11,15 @@ import { Producto } from './sistema/producto/producto';
 import { AgregarProducto } from './sistema/producto/agregar-producto/agregar-producto';
 import { EditarProducto } from './sistema/producto/editar-producto/editar-producto';
 import { Configuracion } from './sistema/configuracion/configuracion';
+import { ServiciosConf } from './sistema/configuracion/servicios/servicios';
+import { AgregarServicios } from './sistema/configuracion/servicios/agregar-servicios/agregar-servicios';
+import { EditarServicios } from './sistema/configuracion/servicios/editar-servicios/editar-servicios';
 import { Servicio } from './sistema/servicio/servicio';
 import { Ventas }        from './sistema/servicio/ventas/ventas';
 import { Mantenimiento } from './sistema/servicio/mantenimiento/mantenimiento';
 import { CrearVenta } from './sistema/servicio/ventas/crear-venta/crear-venta';
 import { CrearMantenimiento } from './sistema/servicio/mantenimiento/crear-mantenimiento/crear-mantenimiento';
+import { ReporteGeneral } from './sistema/servicio/reporte-general/reporte-general';
 import { Reabastecimiento } from './sistema/reabastecimiento/reabastecimiento';
 import { authGuard } from './auth.guard';
 import { Rol } from './sistema/configuracion/rol/rol';
@@ -34,6 +38,8 @@ import { AgregarCliente } from './sistema/cliente/agregar-cliente/agregar-client
 import { EditarCliente } from './sistema/cliente/editar-cliente/editar-cliente';
 import { Compra } from './sistema/compra/compra';
 import { NuevaCompra } from './sistema/compra/nueva-compra/nueva-compra';
+import { Auditoria } from './sistema/auditoria/auditoria';
+import { DetallesAuditoria } from './sistema/auditoria/detalles-auditoria/detalles-auditoria';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -45,6 +51,12 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: Dashboard },
+      { path: 'auditoria',
+        component: Auditoria,
+        children: [
+          { path: 'detalles-auditoria', component: DetallesAuditoria },
+        ],
+      },
       {
         path: 'cliente',
         component: Cliente,
@@ -87,6 +99,7 @@ export const routes: Routes = [
               { path: 'crear', component: CrearMantenimiento },
             ],
           },
+          { path: 'reporte-general', component: ReporteGeneral },
         ],
       },
       {
@@ -116,6 +129,14 @@ export const routes: Routes = [
             children: [
               { path: 'agregar-marcas', component: AgregarMarcas },
               { path: 'editar-marcas/:id', component: EditarMarcas },
+            ],
+          },
+          {
+            path: 'servicios',
+            component: ServiciosConf,
+            children: [
+              { path: 'agregar-servicios', component: AgregarServicios },
+              { path: 'editar-servicios/:id', component: EditarServicios },
             ],
           },
         ],

@@ -23,6 +23,9 @@ interface ItemCompra {
   mostrarDropdown: boolean;
   errorCantidad: boolean;
   errorPrecio: boolean;
+  dropdownTop: number;
+  dropdownLeft: number;
+  dropdownWidth: number;
 }
 
 @Component({
@@ -82,10 +85,25 @@ export class NuevaCompra implements OnInit {
       mostrarDropdown: false,
       errorCantidad: false,
       errorPrecio: false,
+      dropdownTop: 0,
+      dropdownLeft: 0,
+      dropdownWidth: 0,
     };
   }
 
   agregarItem() {
+    if (this.items.length > 0) {
+      const ultimoItem = this.items[this.items.length - 1];
+      if (!ultimoItem.nombre_repuesto && !ultimoItem.busqueda) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Producto anterior incompleto',
+          text: 'Debe seleccionar un producto en la fila actual antes de agregar uno nuevo.',
+          confirmButtonColor: '#dc3545'
+        });
+        return;
+      }
+    }
     this.items.push(this.nuevoItem());
   }
 
@@ -94,18 +112,39 @@ export class NuevaCompra implements OnInit {
     if (this.items.length === 0) this.agregarItem();
   }
 
-  buscarProducto(item: ItemCompra) {
+  buscarProducto(item: ItemCompra, event?: Event) {
     item.nombre_repuesto = '';
     const q = item.busqueda.trim().toLowerCase();
-    if (!q) {
-      item.resultados = [];
-      item.mostrarDropdown = false;
-      return;
+
+    let filtrados = this.productosDisponibles.filter((p: any) => p.estado === 'Activo' || !p.estado);
+
+    if (this.rucProveedor) {
+      const provSel = this.proveedores.find(p => p.ruc === this.rucProveedor);
+      const nombreProv = provSel ? (provSel.nombre_empresa || '').toLowerCase().trim() : '';
+      filtrados = filtrados.filter((p: any) => {
+        const provProd = (p.nombre_proveedor || p.proveedor || p.ruc_proveedor || '').toLowerCase().trim();
+        return provProd === nombreProv || provProd === this.rucProveedor.toLowerCase().trim();
+      });
     }
-    item.resultados = this.productosDisponibles.filter((p) =>
-      p.nombre_repuesto.toLowerCase().includes(q),
-    );
-    item.mostrarDropdown = true;
+
+    if (q) {
+      item.resultados = filtrados.filter((p) =>
+        p.nombre_repuesto.toLowerCase().includes(q)
+      );
+    } else {
+      item.resultados = [...filtrados];
+    }
+
+    if (item.resultados.length > 0 && event) {
+      const input = event.target as HTMLInputElement;
+      if (input && typeof input.getBoundingClientRect === 'function') {
+        const rect = input.getBoundingClientRect();
+        item.dropdownTop = rect.bottom + 2;
+        item.dropdownLeft = rect.left;
+        item.dropdownWidth = rect.width;
+      }
+    }
+    item.mostrarDropdown = item.resultados.length > 0;
   }
 
   seleccionarProducto(item: ItemCompra, producto: ProductoDisponible) {
