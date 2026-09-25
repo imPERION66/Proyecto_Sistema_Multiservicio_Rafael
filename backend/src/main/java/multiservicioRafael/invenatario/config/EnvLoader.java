@@ -38,7 +38,7 @@ public class EnvLoader {
         String[] keys = {
             "url", "user", "password",
             "brevo.smtp.host", "brevo.smtp.port", "brevo.smtp.user", "brevo.smtp.password", "brevo.smtp.from",
-            "apisperu.api.key", "apisperu.ruc.api.key"
+            "apisperu.api.key", "apisperu.ruc.api.key", "server.port"
         };
         for (String key : keys) {
             String envName = key.replace('.', '_').toUpperCase();
@@ -48,18 +48,57 @@ public class EnvLoader {
             }
         }
 
-        // Mapear también variables estándar de bases de datos
+        // Mapear variables estándar de bases de datos
         String dbUrl = System.getenv("DB_URL");
+        if (dbUrl == null || dbUrl.isEmpty()) {
+            dbUrl = System.getenv("SPRING_DATASOURCE_URL");
+        }
+        if (dbUrl == null || dbUrl.isEmpty()) {
+            dbUrl = System.getenv("DATABASE_URL");
+        }
+        
         if (dbUrl != null && !dbUrl.isEmpty()) {
+            // Si la URL viene en formato postgres:// o postgresql:// convertir a JDBC si es necesario
+            if (dbUrl.startsWith("postgres://") || dbUrl.startsWith("postgresql://")) {
+                if (!dbUrl.startsWith("jdbc:")) {
+                    dbUrl = "jdbc:" + dbUrl;
+                }
+            }
+            if (!dbUrl.contains("sslmode=") && !dbUrl.contains("localhost") && !dbUrl.contains("127.0.0.1")) {
+                dbUrl += (dbUrl.contains("?") ? "&" : "?") + "sslmode=require";
+            }
             properties.setProperty("url", dbUrl);
         }
+
         String dbUser = System.getenv("DB_USER");
+        if (dbUser == null || dbUser.isEmpty()) {
+            dbUser = System.getenv("SPRING_DATASOURCE_USERNAME");
+        }
+        if (dbUser == null || dbUser.isEmpty()) {
+            dbUser = System.getenv("DATABASE_USER");
+        }
         if (dbUser != null && !dbUser.isEmpty()) {
             properties.setProperty("user", dbUser);
         }
+
         String dbPassword = System.getenv("DB_PASSWORD");
+        if (dbPassword == null || dbPassword.isEmpty()) {
+            dbPassword = System.getenv("SPRING_DATASOURCE_PASSWORD");
+        }
+        if (dbPassword == null || dbPassword.isEmpty()) {
+            dbPassword = System.getenv("DATABASE_PASSWORD");
+        }
         if (dbPassword != null && !dbPassword.isEmpty()) {
             properties.setProperty("password", dbPassword);
+        }
+
+        // Mapear puerto de servidor dinámico para Render / Dokploy / Docker
+        String port = System.getenv("PORT");
+        if (port == null || port.isEmpty()) {
+            port = System.getenv("SERVER_PORT");
+        }
+        if (port != null && !port.isEmpty()) {
+            properties.setProperty("server.port", port);
         }
         
         // Procesar cualquier otra propiedad cargada dinámicamente desde el archivo

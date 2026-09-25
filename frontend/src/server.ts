@@ -43,7 +43,7 @@ app.use(
  * Proxy all /api requests to the backend service.
  */
 app.use('/api', (req, res) => {
-  const backendUrl = process.env['API_URL'] || 'http://localhost:8080';
+  const backendUrl = process.env['API_URL'] || 'https://sistemamultiservicio-rafael.onrender.com';
   const targetUrl = new URL(req.originalUrl, backendUrl);
   
   const client = backendUrl.startsWith('https') ? https : http;
@@ -80,7 +80,7 @@ app.use((req, res, next) => {
     if (host.includes('localhost') || host.includes('127.0.0.1')) {
       process.env['API_URL'] = 'http://localhost:8080';
     } else {
-      process.env['API_URL'] = `${req.protocol}://${host}`;
+      process.env['API_URL'] = 'https://sistemamultiservicio-rafael.onrender.com';
     }
   }
   angularApp

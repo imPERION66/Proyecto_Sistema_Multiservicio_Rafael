@@ -14,18 +14,34 @@ public class ConexionDB {
     private ConexionDB() {
         Properties properties = multiservicioRafael.invenatario.config.EnvLoader.loadProperties();
 
+        String jdbcUrl = properties.getProperty("url");
+        String username = properties.getProperty("user");
+        String password = properties.getProperty("password");
+
+        System.out.println("Inicializando Pool HikariCP con JDBC URL: " + (jdbcUrl != null ? jdbcUrl.replaceAll("password=[^&]*", "password=****") : "NULL"));
+        System.out.println("Usuario BD configurado: " + username);
+
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(properties.getProperty("url"));
-        config.setUsername(properties.getProperty("user"));
-        config.setPassword(properties.getProperty("password"));
+        config.setJdbcUrl(jdbcUrl);
+        config.setUsername(username);
+        config.setPassword(password);
         config.setDriverClassName("org.postgresql.Driver");
 
-        config.setMaximumPoolSize(5);        
-        config.setConnectionTimeout(15000);   
-        config.setIdleTimeout(120000);      
+        config.setMaximumPoolSize(10);        
+        config.setMinimumIdle(1);
+        config.setConnectionTimeout(30000);   // 30 segundos para soportar cold starts
+        config.setIdleTimeout(120000);        // 2 minutos
+        config.setMaxLifetime(1800000);       // 30 minutos
+        config.setKeepaliveTime(30000);       // 30 segundos para evitar cortes de firewall
         config.setConnectionTestQuery("SELECT 1"); 
 
-        this.dataSource = new HikariDataSource(config);
+        try {
+            this.dataSource = new HikariDataSource(config);
+            System.out.println("Pool HikariCP inicializado correctamente.");
+        } catch (Exception e) {
+            System.err.println("Error crítico al inicializar HikariDataSource: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public static synchronized ConexionDB getInstance() {
