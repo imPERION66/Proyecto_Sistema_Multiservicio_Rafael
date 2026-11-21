@@ -195,7 +195,7 @@
 <div class="modal-footer border-0 p-4 p-md-5">
     <button class="btn btn-outline-secondary" (click)="cerrarModal()">Cancelar</button>
     <button class="btn btn-danger" (click)="guardarTrabajador()"
-        [disabled]="!permiteEdicionManual && (!correoValidado || !dniValidado)">
+        [disabled]="!dniValidado || (cargoRequiereCredenciales() && !correoValidado)">
         Guardar Trabajador
     </button>
 </div>
