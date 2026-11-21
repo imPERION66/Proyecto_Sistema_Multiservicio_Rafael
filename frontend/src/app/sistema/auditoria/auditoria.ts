@@ -14,6 +14,7 @@ export interface ActividadAuditoria {
   idRegistro: number | null;
   descripcion: string;
   usuario: string;
+  dniTrabajador?: string;
   nombreTrabajador: string;
   valorAnterior?: string | null;
   valorNuevo?: string | null;
@@ -36,7 +37,7 @@ export class Auditoria implements OnInit {
   mostrarModalRuta = signal(false);
   actividades = signal<ActividadAuditoria[]>([]);
   total = signal(0);
-  usuariosDisponibles = signal<{ usuario: string; nombre: string }[]>([]);
+  usuariosDisponibles = signal<{ usuario: string; nombre: string; dni?: string }[]>([]);
   tablasDisponibles = signal<string[]>([]);
   tiposAccionDisponibles = signal<string[]>([]);
   pagina = signal(1);

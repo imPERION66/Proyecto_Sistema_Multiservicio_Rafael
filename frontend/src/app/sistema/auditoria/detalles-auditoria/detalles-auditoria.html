@@ -25,7 +25,7 @@
       <div class="col-md-6">
         <label class="form-label fw-bold small text-muted mb-1">Realizado por</label>
         <div class="fw-semibold">{{ actividad.nombreTrabajador }}</div>
-        <div class="text-muted small">{{ actividad.usuario }}</div>
+        <div class="text-muted small">{{ actividad.dniTrabajador ? ('DNI: ' + actividad.dniTrabajador + ' (' + actividad.usuario + ')') : actividad.usuario }}</div>
       </div>
       <div class="col-md-6">
         <label class="form-label fw-bold small text-muted mb-1">Fecha y hora</label>

@@ -62,7 +62,8 @@ public class AuditoriaDao implements AuditoriaDaoInterface {
             }
 
             String sql = "SELECT a.fecha_auditoria, da.tipo_accion, da.tabla_afectada, " +
-                    "da.id_registro, da.descripcion, u.usuario AS usuario_login, " +
+                    "da.id_registro, da.descripcion, da.datos_anteriores, da.datos_nuevos, u.usuario AS usuario_login, " +
+                    "t.nro_documento AS dni_trabajador, " +
                     "trim(t.nombre || ' ' || t.apellido_paterno) AS nombre_trabajador " +
                     from + where +
                     " ORDER BY a.fecha_auditoria DESC LIMIT ? OFFSET ?";
@@ -80,7 +81,10 @@ public class AuditoriaDao implements AuditoriaDaoInterface {
                         fila.put("idRegistro", rs.getObject("id_registro"));
                         fila.put("descripcion", rs.getString("descripcion"));
                         fila.put("usuario", rs.getString("usuario_login"));
+                        fila.put("dniTrabajador", rs.getString("dni_trabajador"));
                         fila.put("nombreTrabajador", rs.getString("nombre_trabajador"));
+                        fila.put("valorAnterior", rs.getString("datos_anteriores"));
+                        fila.put("valorNuevo", rs.getString("datos_nuevos"));
                         actividades.add(fila);
                     }
                 }
@@ -117,9 +121,11 @@ public class AuditoriaDao implements AuditoriaDaoInterface {
                 while (rs.next()) tiposAccion.add(rs.getString(1));
             }
 
-            String sqlUsuarios = "SELECT DISTINCT u.usuario, trim(t.nombre || ' ' || t.apellido_paterno) AS nombre " +
-                    "FROM detalle_auditoria da " +
-                    "JOIN usuario u ON u.id_usuario = da.id_usuario " +
+            // Requerimiento 2: Listar a todos los trabajadores registrados en el sistema
+            String sqlUsuarios = "SELECT u.usuario, " +
+                    "trim(t.nombre || ' ' || t.apellido_paterno) AS nombre, " +
+                    "t.nro_documento AS dni " +
+                    "FROM usuario u " +
                     "JOIN trabajador t ON t.id_trabajador = u.id_trabajador " +
                     "ORDER BY nombre";
             try (PreparedStatement ps = cn.prepareStatement(sqlUsuarios);
@@ -128,6 +134,7 @@ public class AuditoriaDao implements AuditoriaDaoInterface {
                     Map<String, Object> u = new LinkedHashMap<>();
                     u.put("usuario", rs.getString("usuario"));
                     u.put("nombre", rs.getString("nombre"));
+                    u.put("dni", rs.getString("dni"));
                     usuarios.add(u);
                 }
             }

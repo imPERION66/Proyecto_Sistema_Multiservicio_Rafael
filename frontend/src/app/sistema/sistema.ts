@@ -62,12 +62,21 @@ export class Sistema implements OnInit {
   }
 
   tieneAcceso(menu: string): boolean {
-    if (this.menusAutorizados.some(m => m.toLowerCase() === menu.toLowerCase())) {
+    const normalizar = (s: string) =>
+      (s || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+
+    const buscado = normalizar(menu);
+
+    if (this.menusAutorizados.some(m => normalizar(m) === buscado)) {
       return true;
     }
     
-    if (menu === 'Venta' || menu === 'Mantenimiento') {
-      return this.menusAutorizados.some(m => m.toLowerCase() === 'servicios');
+    if (buscado === 'venta' || buscado === 'mantenimiento') {
+      return this.menusAutorizados.some(m => normalizar(m) === 'servicios');
     }
     
     return false;
